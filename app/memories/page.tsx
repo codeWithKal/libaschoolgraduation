@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Navigation from "@/components/navigation";
 import MediaGallery from "@/components/media-gallery";
 import LightBox from "@/components/lightbox";
+import UploadMemory from "@/components/UploadMemory";
 import Footer from "@/components/footer";
 
 import { useData } from "@/hooks/useData";
@@ -240,6 +241,16 @@ export default function MemoriesPage() {
                 </p>
               </div>
             </div>
+          </div>
+
+          <div className="mb-10">
+            <div className="rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-2xl p-6">
+                <h2 className="text-2xl font-bold text-white mb-4">Upload a Memory</h2>
+                <p className="text-netflix-lightgray mb-6">
+                  Share a new photo or video from the graduation celebration.
+                </p>
+                <UploadMemory onUploaded={() => window.location.reload()} />
+              </div>
           </div>
 
           {/* GALLERY */}

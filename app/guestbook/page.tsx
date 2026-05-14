@@ -110,9 +110,9 @@ export default function GuestbookPage() {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 rounded-xl bg-netflix-black/60 backdrop-blur border border-white/10 text-white transition hover:scale-105"
         >
-              <div className="mt-8">
-                <UploadMemory onUploaded={() => window.location.reload()} />
-              </div>
+          <div className="mt-8">
+            <UploadMemory onUploaded={() => window.location.reload()} />
+          </div>
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -256,9 +256,6 @@ export default function GuestbookPage() {
                       )}
                     </button>
                   </form>
-                  <div className="mt-8">
-                    <UploadMemory onUploaded={() => window.location.reload()} />
-                  </div>
                 </div>
               </div>
             </div>

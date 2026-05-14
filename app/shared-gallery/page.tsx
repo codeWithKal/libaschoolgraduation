@@ -6,6 +6,7 @@ import { useData } from "@/hooks/useData";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 import LightBox from "@/components/lightbox";
+import UploadMemory from "@/components/UploadMemory";
 
 interface GalleryItem {
   id: number;
@@ -91,7 +92,17 @@ export default function SharedGalleryPage() {
               download your favorites.
             </p>
           </div>
-
+          <div className="mb-10">
+            <div className="rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-2xl p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Upload a Memory
+              </h2>
+              <p className="text-netflix-lightgray mb-6">
+                Share a new photo or video from the graduation celebration.
+              </p>
+              <UploadMemory onUploaded={() => window.location.reload()} />
+            </div>
+          </div>
           {/* Gallery Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {approvedGallery?.map((item, index) => (

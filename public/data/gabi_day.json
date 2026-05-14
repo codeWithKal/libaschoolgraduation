@@ -1,0 +1,65 @@
+[
+  {
+    "id": 2,
+    "type": "image",
+    "url": "/images/gabi_day/gabi2.jpg",
+    "caption": "Gabi Day moment 2",
+    "studentId": 2
+  },
+  {
+    "id": 3,
+    "type": "image",
+    "url": "/images/gabi_day/gabi3.jpg",
+    "caption": "Gabi Day moment 3",
+    "studentId": 3
+  },
+  {
+    "id": 4,
+    "type": "image",
+    "url": "/images/gabi_day/gabi4.jpg",
+    "caption": "Gabi Day moment 4",
+    "studentId": 4
+  },
+  {
+    "id": 5,
+    "type": "image",
+    "url": "/images/gabi_day/gabi5.jpg",
+    "caption": "Gabi Day moment 5",
+    "studentId": 5
+  },
+  {
+    "id": 6,
+    "type": "image",
+    "url": "/images/gabi_day/gabi6.jpg",
+    "caption": "Gabi Day moment 6",
+    "studentId": 6
+  },
+  {
+    "id": 7,
+    "type": "image",
+    "url": "/images/gabi_day/gabi7.jpg",
+    "caption": "Gabi Day moment 7",
+    "studentId": 7
+  },
+  {
+    "id": 8,
+    "type": "image",
+    "url": "/images/gabi_day/gabi8.jpg",
+    "caption": "Gabi Day moment 8",
+    "studentId": 8
+  },
+  {
+    "id": 9,
+    "type": "image",
+    "url": "/images/gabi_day/gabi9.jpg",
+    "caption": "Gabi Day moment 9",
+    "studentId": 9
+  },
+  {
+    "id": 10,
+    "type": "video",
+    "url": "/images/gabi_day/video1.mp4",
+    "caption": "Gabi Day highlights reel",
+    "studentId": 2
+  }
+]

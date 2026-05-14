@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
-import UploadMemory from "@/components/UploadMemory";
 import { MessageCircle, Menu, X, Send, Sparkles, Heart } from "lucide-react";
 
 interface GuestbookMessage {
@@ -110,9 +109,6 @@ export default function GuestbookPage() {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 rounded-xl bg-netflix-black/60 backdrop-blur border border-white/10 text-white transition hover:scale-105"
         >
-          <div className="mt-8">
-            <UploadMemory onUploaded={() => window.location.reload()} />
-          </div>
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>

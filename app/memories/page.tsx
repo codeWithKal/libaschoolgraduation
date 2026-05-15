@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Navigation from "@/components/navigation";
 import MediaGallery from "@/components/media-gallery";
 import LightBox from "@/components/lightbox";
@@ -26,10 +26,12 @@ interface GalleryItem {
   caption: string;
   studentId: number;
   day: string;
-  thumbnail?: string; // ✅ Add optional thumbnail URL
+  thumbnail?: string;
 }
 
-// ✅ Video Thumbnail Component (with cover image)
+// ✅ Cached Video Thumbnail Component
+const thumbnailCache = new Map<string, string>();
+
 function VideoThumbnail({
   item,
   size = "large",
@@ -37,25 +39,33 @@ function VideoThumbnail({
   item: GalleryItem;
   size?: "large" | "small";
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
-    item.thumbnail || null,
+    item.thumbnail || thumbnailCache.get(item.url) || null,
   );
-  const [isLoading, setIsLoading] = useState(!item.thumbnail);
+  const [isLoading, setIsLoading] = useState(
+    !item.thumbnail && !thumbnailCache.has(item.url),
+  );
 
   useEffect(() => {
-    // If thumbnail is already provided in the data, use it
-    if (item.thumbnail) {
-      setThumbnailUrl(item.thumbnail);
+    // Check cache first
+    if (thumbnailCache.has(item.url)) {
+      setThumbnailUrl(thumbnailCache.get(item.url)!);
       setIsLoading(false);
       return;
     }
 
-    // Otherwise, try to generate thumbnail from video
+    if (item.thumbnail) {
+      thumbnailCache.set(item.url, item.thumbnail);
+      return;
+    }
+
+    // Generate thumbnail only once per video URL
     const video = document.createElement("video");
     video.crossOrigin = "anonymous";
     video.preload = "metadata";
     video.muted = true;
+
+    let isMounted = true;
 
     const generateThumbnail = () => {
       try {
@@ -63,28 +73,26 @@ function VideoThumbnail({
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext("2d");
-        if (ctx) {
+        if (ctx && isMounted) {
           ctx.drawImage(video, 0, 0);
-          setThumbnailUrl(canvas.toDataURL("image/jpeg", 0.7));
+          const thumbnail = canvas.toDataURL("image/jpeg", 0.7);
+          thumbnailCache.set(item.url, thumbnail);
+          setThumbnailUrl(thumbnail);
           setIsLoading(false);
         }
       } catch (error) {
         console.error("Failed to generate thumbnail:", error);
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     video.addEventListener("loadeddata", () => {
-      video.currentTime = 1; // Seek to 1 second
+      video.currentTime = 1;
     });
 
-    video.addEventListener("seeked", () => {
-      generateThumbnail();
-      video.remove();
-    });
-
+    video.addEventListener("seeked", generateThumbnail);
     video.addEventListener("error", () => {
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
       video.remove();
     });
 
@@ -92,29 +100,28 @@ function VideoThumbnail({
     video.load();
 
     return () => {
+      isMounted = false;
       video.remove();
     };
   }, [item.url, item.thumbnail]);
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden">
-      {/* Cover Image / Thumbnail */}
       {thumbnailUrl ? (
         <img
           src={thumbnailUrl}
           alt={item.caption}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-      ) : (
-        /* Fallback placeholder while generating thumbnail */
+      ) : isLoading ? (
         <div className="w-full h-full flex items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-netflix-red/20 animate-pulse flex items-center justify-center">
             <PlayCircle className="text-netflix-red/50" size={32} />
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Play Button Overlay */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div
           className={`
@@ -134,6 +141,112 @@ function VideoThumbnail({
   );
 }
 
+// ✅ Lazy Image Component with Intersection Observer
+function LazyImage({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "200px" }, // Load 200px before visible
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={imgRef} className={`relative overflow-hidden ${className || ""}`}>
+      {!isLoaded && isInView && (
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 animate-pulse" />
+      )}
+      {isInView && (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          } group-hover:scale-110 transition-transform duration-500`}
+        />
+      )}
+    </div>
+  );
+}
+
+// ✅ Pagination Hook
+function usePagination<T>(items: T[], itemsPerPage: number = 20) {
+  const [visibleCount, setVisibleCount] = useState(itemsPerPage);
+  const [hasMore, setHasMore] = useState(items.length > itemsPerPage);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((prev) => {
+      const newCount = Math.min(prev + itemsPerPage, items.length);
+      setHasMore(newCount < items.length);
+      return newCount;
+    });
+  }, [items.length, itemsPerPage]);
+
+  const reset = useCallback(() => {
+    setVisibleCount(itemsPerPage);
+    setHasMore(items.length > itemsPerPage);
+  }, [items.length, itemsPerPage]);
+
+  const visibleItems = useMemo(
+    () => items.slice(0, visibleCount),
+    [items, visibleCount],
+  );
+
+  return { visibleItems, hasMore, loadMore, reset, total: items.length };
+}
+
+// ✅ Infinite Scroll Hook
+function useInfiniteScroll(loadMore: () => void, hasMore: boolean) {
+  const loaderRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: "500px" },
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMore, hasMore]);
+
+  return loaderRef;
+}
+
 export default function MemoriesPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<GalleryItem | null>(null);
@@ -149,27 +262,34 @@ export default function MemoriesPage() {
 
   const days = ["Gabi Day", "Crazy Day", "Welcome Day"];
 
-  const gallery =
-    selectedDay === "Gabi Day"
-      ? gabiGallery
-      : selectedDay === "Crazy Day"
-        ? crazyGallery
-        : selectedDay === "Welcome Day"
-          ? tripGallery
-          : [];
+  const gallery = useMemo(() => {
+    if (selectedDay === "Gabi Day") return gabiGallery;
+    if (selectedDay === "Crazy Day") return crazyGallery;
+    if (selectedDay === "Welcome Day") return tripGallery;
+    return [];
+  }, [selectedDay, gabiGallery, crazyGallery, tripGallery]);
 
-  const filteredGallery = gallery?.filter((item) => {
-    if (mediaFilter === "all") return true;
-    if (mediaFilter === "images") return item.type !== "video";
-    if (mediaFilter === "videos") return item.type === "video";
-    return true;
-  });
+  const filteredGallery = useMemo(() => {
+    if (!gallery) return [];
+    return gallery.filter((item) => {
+      if (mediaFilter === "all") return true;
+      if (mediaFilter === "images") return item.type !== "video";
+      if (mediaFilter === "videos") return item.type === "video";
+      return true;
+    });
+  }, [gallery, mediaFilter]);
 
+  const { visibleItems, hasMore, loadMore, reset, total } = usePagination(
+    filteredGallery,
+    24,
+  );
+
+  // Reset pagination when filters change
   useEffect(() => {
-    if (!days.includes(selectedDay)) {
-      setSelectedDay("Gabi Day");
-    }
-  }, [selectedDay]);
+    reset();
+  }, [selectedDay, mediaFilter, reset]);
+
+  const loaderRef = useInfiniteScroll(loadMore, hasMore);
 
   const viewOptions = [
     { key: "grid", label: "Grid", icon: LayoutGrid },
@@ -183,10 +303,124 @@ export default function MemoriesPage() {
     { key: "videos", label: "Videos", icon: PlayCircle },
   ] as const;
 
+  // Render item based on type
+  const renderItem = (
+    item: GalleryItem,
+    index: number,
+    isTileMode: boolean = false,
+  ) => {
+    const isVideo = item.type === "video";
+    const size = isTileMode ? "small" : "large";
+
+    return (
+      <div
+        key={`${item.id}-${index}`}
+        onClick={() => setSelectedMedia(item)}
+        className="group cursor-pointer animate-slide-in-up"
+        style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+      >
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500 aspect-[4/3]">
+          <div className="relative overflow-hidden rounded-2xl h-full">
+            {isVideo ? (
+              <VideoThumbnail item={item} size={size} />
+            ) : (
+              <LazyImage
+                src={item.url}
+                alt={item.caption}
+                className="w-full h-full"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
+          </div>
+        </div>
+        <div className="mt-3">
+          <h3 className="text-white font-bold text-lg mb-1 group-hover:text-netflix-red transition truncate">
+            {item.caption}
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-yellow-300">{selectedDay}</span>
+            <span className="text-xs text-netflix-lightgray uppercase">
+              • {item.type}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Tile mode renderer
+  const renderTile = (item: GalleryItem, index: number) => (
+    <div
+      key={`${item.id}-${index}`}
+      onClick={() => setSelectedMedia(item)}
+      className="group cursor-pointer animate-slide-in-up"
+      style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+    >
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500">
+        <div className="relative overflow-hidden rounded-xl aspect-square bg-gradient-to-br from-gray-800 to-gray-900">
+          {item.type === "video" ? (
+            <VideoThumbnail item={item} size="small" />
+          ) : (
+            <LazyImage
+              src={item.url}
+              alt={item.caption}
+              className="w-full h-full"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
+        </div>
+      </div>
+      <div className="mt-3 text-center">
+        <p className="text-sm font-semibold text-white truncate">
+          {item.caption}
+        </p>
+        <p className="text-xs text-netflix-lightgray uppercase">{item.type}</p>
+      </div>
+    </div>
+  );
+
+  // List mode renderer
+  const renderListItem = (item: GalleryItem, index: number) => (
+    <div
+      key={`${item.id}-${index}`}
+      onClick={() => setSelectedMedia(item)}
+      className="group cursor-pointer flex items-center gap-5 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-netflix-red/30 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-500 animate-slide-in-up"
+      style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+    >
+      <div className="relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800 to-gray-900">
+        {item.type === "video" ? (
+          <VideoThumbnail item={item} size="small" />
+        ) : (
+          <LazyImage
+            src={item.url}
+            alt={item.caption}
+            className="w-full h-full"
+          />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-white font-bold text-xl mb-2 group-hover:text-netflix-red transition">
+          {item.caption}
+        </h3>
+        <p className="text-yellow-300 text-sm font-medium mb-2">
+          {selectedDay}
+        </p>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-xs uppercase text-netflix-lightgray">
+          {item.type === "video" ? (
+            <PlayCircle size={12} />
+          ) : (
+            <Images size={12} />
+          )}
+          {item.type}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-netflix-dark overflow-hidden">
-      {/* Background Glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      {/* Background Glow - Optimized with will-change */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden will-change-transform">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-yellow-500/10 blur-3xl rounded-full" />
         <div className="absolute bottom-0 right-1/4 w-[450px] h-[450px] bg-netflix-red/10 blur-3xl rounded-full" />
       </div>
@@ -201,7 +435,6 @@ export default function MemoriesPage() {
         </button>
       </div>
 
-      {/* Navigation */}
       <Navigation
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
@@ -209,7 +442,7 @@ export default function MemoriesPage() {
 
       <div className="relative pt-24 px-4 md:px-8 pb-16">
         <div className="max-w-7xl mx-auto">
-          {/* HEADER */}
+          {/* HEADER - Unchanged */}
           <div className="relative mb-14">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-sm font-medium mb-6">
               <Sparkles size={16} />
@@ -237,16 +470,14 @@ export default function MemoriesPage() {
                   <Images className="text-yellow-400" size={20} />
                 </div>
                 <div>
-                  <p className="text-white font-bold text-lg">
-                    {filteredGallery?.length || 0}
-                  </p>
+                  <p className="text-white font-bold text-lg">{total}</p>
                   <p className="text-netflix-lightgray text-sm">Memories</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* FILTER PANEL */}
+          {/* FILTER PANEL - Unchanged */}
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-2xl p-6 md:p-8 mb-10">
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-transparent to-netflix-red/5" />
             <div className="relative">
@@ -318,124 +549,50 @@ export default function MemoriesPage() {
             </div>
           </div>
 
-          {/* GALLERY */}
-          {filteredGallery && filteredGallery.length > 0 ? (
-            viewMode === "grid" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filteredGallery.map((item, index) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedMedia(item)}
-                    className="group cursor-pointer animate-slide-in-up"
-                    style={{ animationDelay: `${(index % 8) * 0.08}s` }}
-                  >
-                    <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500 aspect-[4/3]">
-                      <div className="relative overflow-hidden rounded-2xl h-full">
-                        {item.type === "video" ? (
-                          // ✅ Use VideoThumbnail with cover image
-                          <VideoThumbnail item={item} size="large" />
-                        ) : (
-                          <img
-                            src={item.url}
-                            alt={item.caption}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <h3 className="text-white font-bold text-lg mb-1 group-hover:text-netflix-red transition truncate">
-                        {item.caption}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-yellow-300">
-                          {selectedDay}
-                        </span>
-                        <span className="text-xs text-netflix-lightgray uppercase">
-                          • {item.type}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : viewMode === "tiles" ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-5">
-                {filteredGallery.map((item, index) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedMedia(item)}
-                    className="group cursor-pointer animate-slide-in-up"
-                    style={{ animationDelay: `${(index % 8) * 0.08}s` }}
-                  >
-                    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500">
-                      <div className="relative overflow-hidden rounded-xl aspect-square bg-gradient-to-br from-gray-800 to-gray-900">
-                        {item.type === "video" ? (
-                          // ✅ Use VideoThumbnail with cover image
-                          <VideoThumbnail item={item} size="small" />
-                        ) : (
-                          <img
-                            src={item.url}
-                            alt={item.caption}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
-                      </div>
-                    </div>
-                    <div className="mt-3 text-center">
-                      <p className="text-sm font-semibold text-white truncate">
-                        {item.caption}
-                      </p>
-                      <p className="text-xs text-netflix-lightgray uppercase">
-                        {item.type}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {filteredGallery.map((item, index) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedMedia(item)}
-                    className="group cursor-pointer flex items-center gap-5 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-netflix-red/30 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-500 animate-slide-in-up"
-                    style={{ animationDelay: `${(index % 8) * 0.08}s` }}
-                  >
-                    <div className="relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800 to-gray-900">
-                      {item.type === "video" ? (
-                        // ✅ Use VideoThumbnail with cover image
-                        <VideoThumbnail item={item} size="small" />
-                      ) : (
-                        <img
-                          src={item.url}
-                          alt={item.caption}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-bold text-xl mb-2 group-hover:text-netflix-red transition">
-                        {item.caption}
-                      </h3>
-                      <p className="text-yellow-300 text-sm font-medium mb-2">
-                        {selectedDay}
-                      </p>
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-xs uppercase text-netflix-lightgray">
-                        {item.type === "video" ? (
-                          <PlayCircle size={12} />
-                        ) : (
-                          <Images size={12} />
-                        )}
-                        {item.type}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
+          {/* GALLERY - With Pagination & Lazy Loading */}
+          {visibleItems && visibleItems.length > 0 ? (
+            <>
+              {viewMode === "grid" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {visibleItems.map((item, index) =>
+                    renderItem(item, index, false),
+                  )}
+                </div>
+              )}
+
+              {viewMode === "tiles" && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-5">
+                  {visibleItems.map((item, index) => renderTile(item, index))}
+                </div>
+              )}
+
+              {viewMode === "list" && (
+                <div className="space-y-5">
+                  {visibleItems.map((item, index) =>
+                    renderListItem(item, index),
+                  )}
+                </div>
+              )}
+
+              {/* Infinite Scroll Loader */}
+              {hasMore && (
+                <div
+                  ref={loaderRef}
+                  className="flex justify-center items-center py-12"
+                >
+                  <div className="w-10 h-10 border-3 border-netflix-red/30 border-t-netflix-red rounded-full animate-spin" />
+                </div>
+              )}
+
+              {/* Loading indicator for remaining items */}
+              {visibleItems.length < total && !hasMore && (
+                <div className="text-center py-12">
+                  <p className="text-netflix-lightgray">
+                    Showing {visibleItems.length} of {total} memories
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-24">
               <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
@@ -453,7 +610,6 @@ export default function MemoriesPage() {
         </div>
       </div>
 
-      {/* LIGHTBOX */}
       {selectedMedia && (
         <LightBox
           media={selectedMedia}
@@ -461,7 +617,6 @@ export default function MemoriesPage() {
         />
       )}
 
-      {/* FOOTER */}
       <Footer />
     </div>
   );

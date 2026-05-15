@@ -10,6 +10,10 @@ import {
   Maximize,
   Minimize,
   Download,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+  Film,
 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback, memo } from "react";
 
@@ -68,8 +72,6 @@ function useBodyScrollLock(isLocked: boolean) {
 
     const originalOverflow = document.body.style.overflow;
     const originalPaddingRight = document.body.style.paddingRight;
-
-    // Prevent layout shift when scrollbar disappears
     const scrollbarWidth =
       window.innerWidth - document.documentElement.clientWidth;
 
@@ -94,7 +96,6 @@ function formatTime(seconds: number): string {
   if (hours > 0) {
     return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   }
-
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
 
@@ -109,33 +110,26 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState(false);
   const [showControls, setShowControls] = useState(true);
-
-  // Progress states
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Reset controls visibility timer
   const resetControlsTimer = useCallback(() => {
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     if (isPlaying) {
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
+      controlsTimeoutRef.current = setTimeout(
+        () => setShowControls(false),
+        3000,
+      );
     }
   }, [isPlaying]);
 
-  // Show controls on mouse move
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
     resetControlsTimer();
   }, [resetControlsTimer]);
 
-  // Toggle play/pause
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -150,7 +144,6 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     }
   }, []);
 
-  // Toggle mute
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -158,7 +151,6 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     setIsMuted(!video.muted);
   }, []);
 
-  // Toggle fullscreen
   const toggleFullscreen = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -172,51 +164,40 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     }
   }, []);
 
-  // Handle time update
   const handleTimeUpdate = useCallback(() => {
     const video = videoRef.current;
     if (!video || isDragging) return;
     setCurrentTime(video.currentTime);
   }, [isDragging]);
 
-  // Handle metadata loaded
   const handleLoadedMetadata = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     setDuration(video.duration);
   }, []);
 
-  // Handle progress
   const handleProgress = useCallback(() => {
     const video = videoRef.current;
-    if (!video) return;
-
-    if (video.buffered.length > 0) {
-      setBuffered(video.buffered.end(video.buffered.length - 1));
-    }
+    if (!video || video.buffered.length === 0) return;
+    setBuffered(video.buffered.end(video.buffered.length - 1));
   }, []);
 
-  // Handle seek
   const handleSeek = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const progressBar = progressBarRef.current;
       const video = videoRef.current;
-      if (!progressBar || !video) return;
+      if (!progressBar || !video || duration === 0) return;
 
       const rect = progressBar.getBoundingClientRect();
       const percentage = Math.max(
         0,
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
-      const newTime = percentage * duration;
-
-      video.currentTime = newTime;
-      setCurrentTime(newTime);
+      video.currentTime = percentage * duration;
     },
     [duration],
   );
 
-  // Handle drag start
   const handleDragStart = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       setIsDragging(true);
@@ -225,74 +206,58 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     [handleSeek],
   );
 
-  // Handle drag move
   const handleDragMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging) return;
-
-      const progressBar = progressBarRef.current;
-      const video = videoRef.current;
-      if (!progressBar || !video) return;
-
-      const rect = progressBar.getBoundingClientRect();
+      if (!isDragging || !progressBarRef.current || duration === 0) return;
+      const rect = progressBarRef.current.getBoundingClientRect();
       const percentage = Math.max(
         0,
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
-      const newTime = percentage * duration;
-
-      setCurrentTime(newTime);
+      setCurrentTime(percentage * duration);
     },
     [isDragging, duration],
   );
 
-  // Handle drag end
   const handleDragEnd = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging) return;
-
-      const progressBar = progressBarRef.current;
-      const video = videoRef.current;
-      if (!progressBar || !video) return;
-
-      const rect = progressBar.getBoundingClientRect();
+      if (
+        !isDragging ||
+        !videoRef.current ||
+        !progressBarRef.current ||
+        duration === 0
+      )
+        return;
+      const rect = progressBarRef.current.getBoundingClientRect();
       const percentage = Math.max(
         0,
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
-      const newTime = percentage * duration;
-
-      video.currentTime = newTime;
+      videoRef.current.currentTime = percentage * duration;
       setIsDragging(false);
     },
     [isDragging, duration],
   );
 
-  // Add/remove drag event listeners
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleDragMove);
       document.addEventListener("mouseup", handleDragEnd);
     }
-
     return () => {
       document.removeEventListener("mousemove", handleDragMove);
       document.removeEventListener("mouseup", handleDragEnd);
     };
   }, [isDragging, handleDragMove, handleDragEnd]);
 
-  // Handle fullscreen change
   useEffect(() => {
-    const handleFullscreenChange = () => {
+    const handleFullscreenChange = () =>
       setIsFullscreen(!!document.fullscreenElement);
-    };
-
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Keyboard controls for video
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -320,11 +285,9 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
           video.volume = Math.max(0, video.volume - 0.1);
           break;
         case "m":
-        case "M":
           toggleMute();
           break;
         case "f":
-        case "F":
           toggleFullscreen();
           break;
       }
@@ -334,16 +297,16 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [togglePlay, toggleMute, toggleFullscreen]);
 
-  // Calculate progress percentages
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
   const bufferedPercentage = duration > 0 ? (buffered / duration) * 100 : 0;
 
   if (error) {
     return (
-      <div className="flex items-center justify-center w-full aspect-video bg-gray-900 rounded-lg">
+      <div className="flex items-center justify-center w-full h-full min-h-[400px] bg-gray-900 rounded-xl">
         <div className="text-center">
-          <Play className="text-gray-500 mx-auto mb-3" size={48} />
-          <p className="text-gray-400 text-sm">Failed to load video</p>
+          <Film className="text-gray-600 mx-auto mb-3" size={48} />
+          <p className="text-gray-500 text-sm">Unable to load video</p>
+          <p className="text-gray-600 text-xs mt-1">Please try again later</p>
         </div>
       </div>
     );
@@ -351,11 +314,10 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
 
   return (
     <div
-      className="relative group w-full aspect-video bg-black rounded-lg overflow-hidden"
+      className="relative group w-full h-full bg-black rounded-xl overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      {/* Video Element */}
       <video
         ref={videoRef}
         src={url}
@@ -369,23 +331,19 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
         onError={() => setError(true)}
         playsInline
         preload="metadata"
-      >
-        <track kind="captions" />
-      </video>
+      />
 
-      {/* Center Play Button Overlay */}
       {!isPlaying && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer"
           onClick={togglePlay}
         >
-          <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 hover:scale-110 transition-all duration-200">
-            <Play className="text-white fill-white" size={36} />
+          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 hover:scale-110 transition-all duration-200">
+            <Play className="text-white fill-white ml-1" size={28} />
           </div>
         </div>
       )}
 
-      {/* Video Controls Bar */}
       <div
         className={`
           absolute bottom-0 left-0 right-0
@@ -394,78 +352,66 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
           ${showControls || !isPlaying ? "opacity-100" : "opacity-0"}
         `}
       >
-        {/* Progress Bar */}
         <div className="px-4 pt-2 pb-1">
           <div
             ref={progressBarRef}
-            className="relative h-1.5 bg-white/20 rounded-full cursor-pointer group/progress hover:h-2.5 transition-all duration-150"
+            className="relative h-1 bg-white/20 rounded-full cursor-pointer group/progress hover:h-1.5 transition-all duration-150"
             onClick={handleSeek}
             onMouseDown={handleDragStart}
           >
-            {/* Buffered Progress */}
             <div
               className="absolute top-0 left-0 h-full bg-white/30 rounded-full"
               style={{ width: `${bufferedPercentage}%` }}
             />
-
-            {/* Played Progress */}
             <div
               className="absolute top-0 left-0 h-full bg-netflix-red rounded-full"
               style={{ width: `${progressPercentage}%` }}
             />
-
-            {/* Seek Handle */}
             <div
-              className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-netflix-red rounded-full opacity-0 group-hover/progress:opacity-100 transition-all duration-150 shadow-lg"
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-netflix-red rounded-full opacity-0 group-hover/progress:opacity-100 transition-all duration-150 shadow-lg"
               style={{
-                left: `calc(${progressPercentage}% - ${progressPercentage > 0 && progressPercentage < 100 ? "7px" : "0px"})`,
+                left: `calc(${progressPercentage}% - 6px)`,
                 display: progressPercentage === 0 ? "none" : "block",
               }}
             />
           </div>
         </div>
 
-        {/* Controls Row */}
-        <div className="flex items-center gap-3 px-4 pb-3 pt-1">
-          {/* Play/Pause Button */}
+        <div className="flex items-center gap-2 px-4 pb-3 pt-1">
           <button
             onClick={togglePlay}
             className="p-1.5 rounded-full hover:bg-white/10 transition text-white"
-            aria-label={isPlaying ? "Pause video" : "Play video"}
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <Pause size={22} />
+              <Pause size={18} />
             ) : (
-              <Play size={22} className="fill-white" />
+              <Play size={18} className="fill-white" />
             )}
           </button>
 
-          {/* Time Display */}
-          <div className="text-white text-sm font-medium tabular-nums select-none">
+          <div className="text-white text-xs font-medium tabular-nums">
             <span>{formatTime(currentTime)}</span>
-            <span className="text-white/50 mx-1">/</span>
-            <span className="text-white/50">{formatTime(duration)}</span>
+            <span className="text-white/40 mx-0.5">/</span>
+            <span className="text-white/40">{formatTime(duration)}</span>
           </div>
 
-          {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Mute Button */}
           <button
             onClick={toggleMute}
             className="p-1.5 rounded-full hover:bg-white/10 transition text-white"
-            aria-label={isMuted ? "Unmute video" : "Mute video"}
+            aria-label={isMuted ? "Unmute" : "Mute"}
           >
-            {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+            {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
 
-          {/* Fullscreen Button */}
           <button
             onClick={toggleFullscreen}
             className="p-1.5 rounded-full hover:bg-white/10 transition text-white"
-            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
-            {isFullscreen ? <Minimize size={22} /> : <Maximize size={22} />}
+            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
           </button>
         </div>
       </div>
@@ -489,33 +435,24 @@ const NavigationArrow = memo(function NavigationArrow({
     <button
       onClick={onClick}
       className={`
-        absolute ${direction === "left" ? "left-4" : "right-4"} top-1/2 -translate-y-1/2
-        p-3 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm
+        absolute ${direction === "left" ? "left-3" : "right-3"} top-1/2 -translate-y-1/2
+        p-2 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm
         text-white transition-all duration-200
-        hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white
+        hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50
         z-20
       `}
-      aria-label={`${direction === "left" ? "Previous" : "Next"} media`}
-      disabled={disabled}
+      aria-label={`${direction === "left" ? "Previous" : "Next"}`}
     >
-      <svg
-        className={`w-6 h-6 ${direction === "left" ? "rotate-180" : ""}`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5l7 7-7 7"
-        />
-      </svg>
+      {direction === "left" ? (
+        <ChevronLeft size={20} />
+      ) : (
+        <ChevronRight size={20} />
+      )}
     </button>
   );
 });
 
-// Main LightBox Component
+// Main LightBox Component - Modal Size
 function LightBox({
   media,
   onClose,
@@ -524,10 +461,7 @@ function LightBox({
   hasNext = false,
   hasPrevious = false,
 }: LightBoxProps) {
-  // Keyboard navigation
   useLightBoxKeyboard({ onClose, onNext, onPrevious });
-
-  // Body scroll lock
   useBodyScrollLock(true);
 
   const isImage = media.type === "image" || media.type === "photo";
@@ -535,125 +469,117 @@ function LightBox({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
-      aria-label={`${isVideo ? "Video" : "Image"} lightbox: ${media.caption}`}
+      aria-label={`${isVideo ? "Video" : "Image"} viewer: ${media.caption}`}
+      onClick={onClose}
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
-
-      {/* Close Button */}
-      <button
-        onClick={onClose}
-        className="
-          absolute top-4 right-4 z-10
-          p-3 rounded-full
-          bg-black/50 hover:bg-black/70 backdrop-blur-sm
-          text-white/80 hover:text-white
-          transition-all duration-200
-          hover:scale-110
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-white
-        "
-        aria-label="Close lightbox"
+      {/* Modal Container */}
+      <div
+        className="relative w-full max-w-5xl max-h-[90vh] bg-black/95 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
       >
-        <X size={24} />
-      </button>
-
-      {/* Download Button (for images) */}
-      {isImage && (
-        <a
-          href={media.url}
-          download
+        {/* Close Button */}
+        <button
+          onClick={onClose}
           className="
-            absolute top-4 right-20 z-10
-            p-3 rounded-full
-            bg-black/50 hover:bg-black/70 backdrop-blur-sm
+            absolute top-3 right-3 z-10
+            p-2 rounded-full
+            bg-black/60 hover:bg-black/80 backdrop-blur-sm
             text-white/80 hover:text-white
             transition-all duration-200
             hover:scale-110
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-white
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50
           "
-          aria-label="Download media"
-          onClick={(e) => e.stopPropagation()}
+          aria-label="Close"
         >
-          <Download size={24} />
-        </a>
-      )}
+          <X size={18} />
+        </button>
 
-      {/* Navigation Arrows */}
-      {hasPrevious && (
-        <NavigationArrow direction="left" onClick={() => onPrevious?.()} />
-      )}
-      {hasNext && (
-        <NavigationArrow direction="right" onClick={() => onNext?.()} />
-      )}
-
-      {/* Content */}
-      <div className="relative w-full h-full max-w-5xl max-h-[90vh] flex items-center justify-center">
-        {isVideo ? (
-          <VideoPlayer url={media.url} />
-        ) : isImage ? (
-          <div className="relative w-full h-full flex items-center justify-center">
-            <Image
-              src={media.url}
-              alt={media.caption || "Media preview"}
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, 90vw"
-              quality={100}
-              priority
-              onError={(e) => {
-                // Fallback for broken images
-                const target = e.target as HTMLImageElement;
-                target.style.display = "none";
-              }}
-            />
-          </div>
-        ) : (
-          <div className="text-center text-gray-400">
-            <p>Unsupported media type</p>
-          </div>
+        {/* Download Button */}
+        {isImage && (
+          <a
+            href={media.url}
+            download
+            className="
+              absolute top-3 right-16 z-10
+              p-2 rounded-full
+              bg-black/60 hover:bg-black/80 backdrop-blur-sm
+              text-white/80 hover:text-white
+              transition-all duration-200
+              hover:scale-110
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+            "
+            aria-label="Download"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download size={18} />
+          </a>
         )}
 
-        {/* Caption Overlay */}
-        {media.caption && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 md:p-8">
-            <div className="max-w-3xl mx-auto">
-              {/* Day Badge */}
-              <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-xs font-semibold text-white/90 uppercase tracking-wider mb-3">
-                {media.day}
-              </span>
+        {/* Navigation Arrows */}
+        {hasPrevious && (
+          <NavigationArrow direction="left" onClick={() => onPrevious?.()} />
+        )}
+        {hasNext && (
+          <NavigationArrow direction="right" onClick={() => onNext?.()} />
+        )}
 
-              {/* Caption */}
-              <p className="text-white text-lg md:text-xl font-medium leading-relaxed">
-                {media.caption}
-              </p>
+        {/* Content Area */}
+        <div className="relative w-full h-full flex items-center justify-center p-6">
+          {isVideo ? (
+            <div className="w-full max-h-[70vh]">
+              <VideoPlayer url={media.url} />
+            </div>
+          ) : isImage ? (
+            <div className="relative w-full h-full min-h-[300px] flex items-center justify-center">
+              <Image
+                src={media.url}
+                alt={media.caption || "Media preview"}
+                width={800}
+                height={600}
+                className="max-w-full max-h-[70vh] w-auto h-auto object-contain rounded-lg"
+                quality={90}
+                priority
+                unoptimized={media.url.startsWith("data:")}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                }}
+              />
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-12">
+              <ImageIcon className="mx-auto mb-3 opacity-50" size={48} />
+              <p>Unsupported media type</p>
+            </div>
+          )}
 
-              {/* Media Type & Student Info */}
-              <div className="flex items-center gap-3 mt-3">
-                <span className="inline-flex items-center gap-1.5 text-sm text-gray-400">
-                  {isVideo ? (
-                    <>
-                      <Play size={14} className="fill-current" />
-                      Video
-                    </>
-                  ) : (
-                    <>
-                      <Play size={14} />
-                      Photo
-                    </>
-                  )}
-                </span>
-                {media.studentId && (
-                  <span className="text-sm text-gray-500">
-                    • Student #{media.studentId}
+          {/* Caption Footer */}
+          {media.caption && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 rounded-b-2xl">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-[10px] font-semibold text-white/80 uppercase tracking-wider">
+                    {media.day}
                   </span>
+                  <span className="text-[10px] text-white/50">
+                    {isVideo ? "Video" : "Photo"}
+                  </span>
+                </div>
+                <p className="text-white text-sm font-medium leading-relaxed line-clamp-2">
+                  {media.caption}
+                </p>
+                {media.studentId && (
+                  <p className="text-white/40 text-xs mt-1">
+                    Student #{media.studentId}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

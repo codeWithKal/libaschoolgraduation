@@ -8,45 +8,159 @@ import HeroSection from "@/components/hero-section";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 
-/* 🃏 LOCAL IMAGES */
-const studentImages = [
-  { id: 1, src: "/images/students/student1.jpg", alt: "Student 1" },
-  { id: 2, src: "/images/students/student2.jpg", alt: "Student 2" },
-  { id: 3, src: "/images/students/student3.jpg", alt: "Student 3" },
-];
+interface Student {
+  id: number;
+  name: string;
+  photo?: string;
+  photo_url?: string;
+}
 
-const memoryImages = [
-  { id: 1, src: "/images/gabi_day/gabi1.jpg", alt: "Memory 1" },
-  { id: 2, src: "/images/trip_day/trip1.jpg", alt: "Memory 2" },
-  { id: 3, src: "/images/gabi_day/gabi2.jpg", alt: "Memory 3" },
-];
+interface Memory {
+  id: number;
+  type: string;
+  url: string;
+  caption: string;
+}
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [studentSlide, setStudentSlide] = useState(0);
   const [memorySlide, setMemorySlide] = useState(0);
 
+  // Dynamic images state
+  const [studentImages, setStudentImages] = useState<
+    { id: number; src: string; alt: string }[]
+  >([]);
+  const [memoryImages, setMemoryImages] = useState<
+    { id: number; src: string; alt: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch random student photos
   useEffect(() => {
+    async function fetchStudentPhotos() {
+      try {
+        const response = await fetch("/data/students.json");
+        const students: Student[] = await response.json();
+
+        // Filter students with valid photos (not base64 or external URLs)
+        const studentsWithPhotos = students.filter(
+          (s) =>
+            s.photo &&
+            !s.photo.startsWith("data:") &&
+            !s.photo.startsWith("https://"),
+        );
+
+        // Shuffle and pick random students
+        const shuffled = [...studentsWithPhotos].sort(
+          () => Math.random() - 0.5,
+        );
+        const selected = shuffled.slice(0, 6); // Pick 6 random students
+
+        // Format for display
+        const formatted = selected.map((student, index) => ({
+          id: student.id,
+          src: student.photo?.startsWith("images/")
+            ? `/${student.photo}`
+            : student.photo || "",
+          alt: student.name,
+        }));
+
+        setStudentImages(
+          formatted.length > 0 ? formatted : getFallbackStudentImages(),
+        );
+      } catch (error) {
+        console.error("Error fetching student photos:", error);
+        setStudentImages(getFallbackStudentImages());
+      }
+    }
+
+    fetchStudentPhotos();
+  }, []);
+
+  // Fetch random memories from Gabi Day and Welcome Day
+  useEffect(() => {
+    async function fetchMemoryPhotos() {
+      try {
+        // Fetch both Gabi Day and Welcome Day memories
+        const [gabiResponse, welcomeResponse] = await Promise.all([
+          fetch("/data/gabi_day.json"),
+          fetch("/data/welcome_day.json"),
+        ]);
+
+        const gabiMemories: Memory[] = await gabiResponse.json();
+        const welcomeMemories: Memory[] = await welcomeResponse.json();
+
+        // Combine and filter only images
+        const allMemories = [...gabiMemories, ...welcomeMemories].filter(
+          (m) => m.type === "image" && m.url,
+        );
+
+        // Shuffle and pick random memories
+        const shuffled = [...allMemories].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, 8); // Pick 8 random memories
+
+        // Format for display
+        const formatted = selected.map((memory, index) => ({
+          id: memory.id,
+          src: memory.url.startsWith("data:") ? memory.url : memory.url,
+          alt: memory.caption || `Memory ${index + 1}`,
+        }));
+
+        setMemoryImages(
+          formatted.length > 0 ? formatted : getFallbackMemoryImages(),
+        );
+      } catch (error) {
+        console.error("Error fetching memory photos:", error);
+        setMemoryImages(getFallbackMemoryImages());
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMemoryPhotos();
+  }, []);
+
+  // Fallback student images
+  function getFallbackStudentImages() {
+    return [
+      { id: 1, src: "/images/students/student1.jpg", alt: "Student 1" },
+      { id: 2, src: "/images/students/student2.jpg", alt: "Student 2" },
+      { id: 3, src: "/images/students/student3.jpg", alt: "Student 3" },
+      { id: 4, src: "/images/students/student4.jpg", alt: "Student 4" },
+      { id: 5, src: "/images/students/student5.jpg", alt: "Student 5" },
+      { id: 6, src: "/images/students/student1.jpg", alt: "Student 6" },
+    ];
+  }
+
+  // Fallback memory images
+  function getFallbackMemoryImages() {
+    return [
+      { id: 1, src: "/images/gabi_day/gabi1.jpg", alt: "Memory 1" },
+      { id: 2, src: "/images/welcome_day/trip1.jpg", alt: "Memory 2" },
+      { id: 3, src: "/images/gabi_day/gabi2.jpg", alt: "Memory 3" },
+      { id: 4, src: "/images/welcome_day/trip2.jpg", alt: "Memory 4" },
+    ];
+  }
+
+  // Rotating slides
+  useEffect(() => {
+    if (studentImages.length === 0) return;
+
     const t = setInterval(() => {
       setStudentSlide((p) => (p + 1) % studentImages.length);
     }, 4000);
     return () => clearInterval(t);
-  }, []);
+  }, [studentImages.length]);
 
   useEffect(() => {
+    if (memoryImages.length === 0) return;
+
     const t = setInterval(() => {
       setMemorySlide((p) => (p + 1) % memoryImages.length);
     }, 4500);
     return () => clearInterval(t);
-  }, []);
-
-  const cardBase =
-    "group relative block rounded-2xl overflow-hidden aspect-video " +
-    "bg-black border border-white/10 transition duration-500 " +
-    "shadow-[0_40px_100px_rgba(0,0,0,0.7)]";
-
-  const hoverFx =
-    "hover:scale-[1.04] hover:-translate-y-2 hover:shadow-[0_60px_140px_rgba(0,0,0,0.85)]";
+  }, [memoryImages.length]);
 
   return (
     <div className="min-h-screen bg-netflix-dark text-white">
@@ -104,43 +218,51 @@ export default function Home() {
             <Link
               href="/students"
               className="
-          relative block overflow-hidden rounded-[2rem]
-          aspect-[16/10]
-          border border-white/10
-          bg-black/40 backdrop-blur-xl
-          transition-all duration-700
-          hover:-translate-y-2
-          hover:border-yellow-400/40
-          hover:shadow-[0_40px_100px_rgba(250,204,21,0.15)]
-        "
-            >
-              {/* Image Grid */}
-              <div className="absolute inset-0 flex">
-                {studentImages.map((img, i) => (
-                  <div
-                    key={img.id}
-                    className={`
-                relative w-1/3 overflow-hidden
+                relative block overflow-hidden rounded-[2rem]
+                aspect-[16/10]
+                border border-white/10
+                bg-black/40 backdrop-blur-xl
                 transition-all duration-700
-                ${
-                  i === studentSlide
-                    ? "scale-105 brightness-110 z-10"
-                    : "opacity-60 scale-95"
-                }
-              `}
-                  >
-                    <Image
-                      src={img.src}
-                      alt={img.alt}
-                      fill
-                      className="
-                  object-cover
-                  transition-transform duration-700
-                  group-hover:scale-110
-                "
-                    />
+                hover:-translate-y-2
+                hover:border-yellow-400/40
+                hover:shadow-[0_40px_100px_rgba(250,204,21,0.15)]
+              "
+            >
+              {/* Image Grid - Show 3 images at a time */}
+              <div className="absolute inset-0 flex">
+                {studentImages.length > 0 ? (
+                  <>
+                    {[0, 1, 2].map((offset) => {
+                      const index =
+                        (studentSlide + offset) % studentImages.length;
+                      const img = studentImages[index];
+                      if (!img) return null;
+
+                      return (
+                        <div
+                          key={`${img.id}-${offset}`}
+                          className={`
+                            relative w-1/3 overflow-hidden
+                            transition-all duration-700
+                            ${offset === 1 ? "scale-105 brightness-110 z-10" : "opacity-60 scale-95"}
+                          `}
+                        >
+                          <Image
+                            src={img.src}
+                            alt={img.alt}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            sizes="(max-width: 768px) 33vw, 20vw"
+                          />
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                    <p className="text-gray-500">Loading students...</p>
                   </div>
-                ))}
+                )}
               </div>
 
               {/* Overlay */}
@@ -151,23 +273,19 @@ export default function Home() {
 
               {/* Content */}
               <div className="absolute inset-0 z-20 flex flex-col justify-end p-8">
-                {/* Badge */}
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur border border-white/10 text-yellow-300 text-xs font-bold uppercase tracking-[0.2em] mb-5 w-fit">
                   🎓 Student Directory
                 </div>
 
-                {/* Title */}
                 <h3 className="text-3xl md:text-4xl font-black text-white mb-3 group-hover:text-yellow-300 transition duration-500">
                   Browse Students
                 </h3>
 
-                {/* Description */}
                 <p className="text-netflix-lightgray text-base md:text-lg max-w-md leading-relaxed mb-6">
                   Explore profiles, achievements, and memories of the graduating
                   class.
                 </p>
 
-                {/* CTA */}
                 <div className="flex items-center gap-3 text-yellow-300 font-semibold text-lg">
                   Explore Profiles
                   <span className="group-hover:translate-x-1 transition-transform duration-300">
@@ -183,43 +301,51 @@ export default function Home() {
             <Link
               href="/memories"
               className="
-          relative block overflow-hidden rounded-[2rem]
-          aspect-[16/10]
-          border border-white/10
-          bg-black/40 backdrop-blur-xl
-          transition-all duration-700
-          hover:-translate-y-2
-          hover:border-netflix-red/40
-          hover:shadow-[0_40px_100px_rgba(229,9,20,0.18)]
-        "
-            >
-              {/* Images */}
-              <div className="absolute inset-0 flex">
-                {memoryImages.map((img, i) => (
-                  <div
-                    key={img.id}
-                    className={`
-                relative w-1/3 overflow-hidden
+                relative block overflow-hidden rounded-[2rem]
+                aspect-[16/10]
+                border border-white/10
+                bg-black/40 backdrop-blur-xl
                 transition-all duration-700
-                ${
-                  i === memorySlide
-                    ? "scale-105 brightness-110 z-10"
-                    : "opacity-60 scale-95"
-                }
-              `}
-                  >
-                    <Image
-                      src={img.src}
-                      alt={img.alt}
-                      fill
-                      className="
-                  object-cover
-                  transition-transform duration-700
-                  group-hover:scale-110
-                "
-                    />
+                hover:-translate-y-2
+                hover:border-netflix-red/40
+                hover:shadow-[0_40px_100px_rgba(229,9,20,0.18)]
+              "
+            >
+              {/* Images - Show 3 at a time */}
+              <div className="absolute inset-0 flex">
+                {memoryImages.length > 0 ? (
+                  <>
+                    {[0, 1, 2].map((offset) => {
+                      const index =
+                        (memorySlide + offset) % memoryImages.length;
+                      const img = memoryImages[index];
+                      if (!img) return null;
+
+                      return (
+                        <div
+                          key={`${img.id}-${offset}`}
+                          className={`
+                            relative w-1/3 overflow-hidden
+                            transition-all duration-700
+                            ${offset === 1 ? "scale-105 brightness-110 z-10" : "opacity-60 scale-95"}
+                          `}
+                        >
+                          <Image
+                            src={img.src}
+                            alt={img.alt}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            sizes="(max-width: 768px) 33vw, 20vw"
+                          />
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                    <p className="text-gray-500">Loading memories...</p>
                   </div>
-                ))}
+                )}
               </div>
 
               {/* Overlay */}
@@ -230,23 +356,19 @@ export default function Home() {
 
               {/* Content */}
               <div className="absolute inset-0 z-20 flex flex-col justify-end p-8">
-                {/* Badge */}
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur border border-white/10 text-netflix-red text-xs font-bold uppercase tracking-[0.2em] mb-5 w-fit">
                   📸 Memory Gallery
                 </div>
 
-                {/* Title */}
                 <h3 className="text-3xl md:text-4xl font-black text-white mb-3 group-hover:text-netflix-red transition duration-500">
                   Shared Memories
                 </h3>
 
-                {/* Description */}
                 <p className="text-netflix-lightgray text-base md:text-lg max-w-md leading-relaxed mb-6">
                   Relive graduation moments, celebrations, trips, and
                   unforgettable experiences.
                 </p>
 
-                {/* CTA */}
                 <div className="flex items-center gap-3 text-netflix-red font-semibold text-lg">
                   View Gallery
                   <span className="group-hover:translate-x-1 transition-transform duration-300">
@@ -266,102 +388,47 @@ export default function Home() {
           >
             <div
               className="
-        relative overflow-hidden
-        min-h-[320px] md:min-h-[420px]
-        border border-yellow-500/20
-        bg-gradient-to-br from-black via-zinc-900 to-black
-
-        transition-all duration-700
-        hover:scale-[1.01]
-        hover:border-yellow-400/40
-
-        shadow-[0_30px_80px_rgba(0,0,0,0.7)]
-      "
+                relative overflow-hidden
+                min-h-[320px] md:min-h-[420px]
+                border border-yellow-500/20
+                bg-gradient-to-br from-black via-zinc-900 to-black
+                transition-all duration-700
+                hover:scale-[1.01]
+                hover:border-yellow-400/40
+                shadow-[0_30px_80px_rgba(0,0,0,0.7)]
+              "
             >
               {/* Glow */}
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-transparent to-yellow-400/10 opacity-70 group-hover:opacity-100 transition duration-700" />
 
               {/* Decorative Blur */}
               <div className="absolute -top-20 -left-20 w-56 h-56 md:w-72 md:h-72 bg-yellow-500/10 blur-3xl rounded-full" />
-
               <div className="absolute -bottom-20 -right-20 w-56 h-56 md:w-72 md:h-72 bg-netflix-red/10 blur-3xl rounded-full" />
 
               {/* Texture */}
               <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:40px_40px]" />
 
               {/* Content */}
-              <div
-                className="
-          relative z-10
-          flex items-center h-full
-          px-5 sm:px-8 md:px-14
-          py-10 md:py-14
-        "
-              >
+              <div className="relative z-10 flex items-center h-full px-5 sm:px-8 md:px-14 py-10 md:py-14">
                 <div className="max-w-3xl">
                   {/* Badge */}
-                  <div
-                    className="
-              inline-flex items-center gap-2
-              px-4 py-2
-              rounded-full
-              bg-yellow-500/10
-              border border-yellow-500/20
-
-              text-yellow-300
-              text-[10px] sm:text-xs
-              uppercase
-              tracking-[0.2em]
-              font-bold
-
-              mb-5
-            "
-                  >
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-[10px] sm:text-xs uppercase tracking-[0.2em] font-bold mb-5">
                     ♠ Signature Guestbook
                   </div>
 
                   {/* Title */}
-                  <h3
-                    className="
-              text-3xl sm:text-4xl md:text-6xl
-              font-black
-              text-white
-              leading-tight
-
-              mb-5
-
-              group-hover:text-yellow-300
-              transition duration-500
-            "
-                  >
+                  <h3 className="text-3xl sm:text-4xl md:text-6xl font-black text-white leading-tight mb-5 group-hover:text-yellow-300 transition duration-500">
                     Leave Your Message
                   </h3>
 
                   {/* Description */}
-                  <p
-                    className="
-              text-sm sm:text-base md:text-xl
-              text-netflix-lightgray
-              leading-relaxed
-
-              mb-8
-              max-w-2xl
-            "
-                  >
+                  <p className="text-sm sm:text-base md:text-xl text-netflix-lightgray leading-relaxed mb-8 max-w-2xl">
                     Share your congratulations, memories, and heartfelt wishes
                     with the graduating NOVAREING batch.
                   </p>
 
                   {/* CTA */}
-                  <div
-                    className="
-              inline-flex items-center gap-3
-
-              text-yellow-300
-              font-bold
-              text-sm sm:text-base md:text-lg
-            "
-                  >
+                  <div className="inline-flex items-center gap-3 text-yellow-300 font-bold text-sm sm:text-base md:text-lg">
                     Open Guestbook
                     <span className="group-hover:translate-x-1 transition-transform duration-300">
                       →

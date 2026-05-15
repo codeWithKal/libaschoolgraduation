@@ -69,7 +69,7 @@ export default function AdminPage() {
       ] = await Promise.all([
         fetch("/data/students.json"),
         fetch("/data/gabi_day.json"),
-        fetch("/data/trip_day.json"),
+        fetch("/data/welcome_day.json"),
         fetch("/data/crazy_day.json"),
         fetch("/data/gallery.json"),
         fetch("/data/guestbook.json"),

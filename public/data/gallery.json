@@ -51,7 +51,7 @@
     "id": 7,
     "type": "image",
     "url": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd17f?w=800&h=600&fit=crop",
-    "caption": "Trip Day road trip squad",
+    "caption": "Welcome Day road trip squad",
     "studentId": 7,
     "approved": true
   },
@@ -59,7 +59,7 @@
     "id": 8,
     "type": "video",
     "url": "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
-    "caption": "Trip Day sunset skate video",
+    "caption": "Welcome Day sunset skate video",
     "studentId": 8,
     "approved": true
   },
@@ -67,7 +67,7 @@
     "id": 9,
     "type": "image",
     "url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&h=600&fit=crop",
-    "caption": "Campfire stories from Trip Day",
+    "caption": "Campfire stories from Welcome Day",
     "studentId": 9,
     "approved": true
   },
@@ -77,6 +77,14 @@
     "caption": "crsger",
     "studentId": 1,
     "url": "/images/gallery/1778679487064-crusher1.jpg",
+    "approved": true
+  },
+  {
+    "id": 1778842070158,
+    "type": "image",
+    "url": "/images/gallery/1778842070157-159-cybersecurity-certificate-kaleab-shiferaw-girma.png",
+    "caption": "Cyber",
+    "studentId": 1,
     "approved": true
   }
 ]

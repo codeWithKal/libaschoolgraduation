@@ -2,26 +2,39 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Trash2, Edit2, Plus, Upload, X, GraduationCap } from "lucide-react";
+import {
+  Trash2,
+  Edit2,
+  Plus,
+  Upload,
+  X,
+  GraduationCap,
+  Loader2,
+} from "lucide-react";
 
 interface Student {
-  id: string;
+  id: number;
   name: string;
   department: "Natural" | "Social";
   photo?: string;
   bio?: string;
   lastWord?: string;
   messages?: string[];
+  stream?: string;
+  photo_url?: string;
+  last_word?: string;
 }
 
 export default function AdminStudents() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const [imagePreview, setImagePreview] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -36,20 +49,14 @@ export default function AdminStudents() {
   }, []);
 
   //
-  // FETCH STUDENTS
+  // FETCH STUDENTS FROM JSON
   //
   async function fetchStudents() {
     try {
       setLoading(true);
-
-      const response = await fetch("/api/students");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch students");
-      }
-
+      const response = await fetch("/data/students.json");
+      if (!response.ok) throw new Error("Failed to fetch students");
       const data = await response.json();
-
       setStudents(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -62,116 +69,245 @@ export default function AdminStudents() {
   //
   // IMAGE UPLOAD
   //
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
-    const reader = new FileReader();
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      alert("Please upload a valid image file (JPEG, PNG, or WebP)");
+      return;
+    }
 
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+
+    setImageFile(file);
+
+    // Create preview
+    const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
-
-      setFormData((prev) => ({
-        ...prev,
-        photo: base64,
-      }));
-
       setImagePreview(base64);
     };
-
     reader.readAsDataURL(file);
   }
 
   //
-  // CREATE OR UPDATE
+  // UPLOAD IMAGE TO SERVER
+  //
+  async function uploadImageToServer(
+    file: File,
+    studentId: number,
+    studentName: string,
+  ): Promise<string> {
+    const formData = new FormData();
+
+    // Generate filename: student-name-studentId.extension
+    const extension = file.name.split(".").pop() || "jpg";
+    const sanitizedName = studentName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+    const filename = `student${studentId}.${extension}`;
+
+    const renamedFile = new File([file], filename, { type: file.type });
+    formData.append("image", renamedFile);
+    formData.append("studentId", studentId.toString());
+
+    const response = await fetch("/api/upload/student-image", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to upload image");
+    }
+
+    const data = await response.json();
+    return data.imagePath; // Returns path like "/images/students/student2.jpg"
+  }
+
+  //
+  // DELETE OLD IMAGE
+  //
+  async function deleteOldImage(imagePath: string) {
+    if (
+      !imagePath ||
+      imagePath.startsWith("data:") ||
+      imagePath.startsWith("https://")
+    ) {
+      return; // Skip base64 and external URLs
+    }
+
+    try {
+      await fetch("/api/upload/student-image", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imagePath }),
+      });
+    } catch (error) {
+      console.error("Error deleting old image:", error);
+    }
+  }
+
+  //
+  // SAVE STUDENTS TO JSON (via API)
+  //
+  async function saveStudents(updatedStudents: Student[]) {
+    try {
+      const response = await fetch("/api/students", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ students: updatedStudents }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save students");
+      }
+
+      await fetchStudents();
+    } catch (error) {
+      console.error("Error saving students:", error);
+      throw error;
+    }
+  }
+
+  //
+  // CREATE OR UPDATE STUDENT
   //
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!formData.name.trim()) {
+      alert("Please enter a student name");
+      return;
+    }
+
+    setUploading(true);
+
     try {
-      const method = editingStudent ? "PUT" : "POST";
+      let photoPath = editingStudent?.photo || "";
 
-      const payload = editingStudent
-        ? {
-            ...editingStudent,
-            ...formData,
-          }
-        : formData;
+      // If there's a new image file, upload it first
+      if (imageFile) {
+        const studentId = editingStudent?.id || Date.now();
 
-      const response = await fetch("/api/students", {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+        // Upload new image to server
+        photoPath = await uploadImageToServer(
+          imageFile,
+          studentId,
+          formData.name,
+        );
 
-      if (!response.ok) {
-        throw new Error("Failed to save student");
+        // Delete old image if editing and photo changed
+        if (
+          editingStudent?.photo &&
+          editingStudent.photo !== photoPath &&
+          !editingStudent.photo.startsWith("https://") &&
+          !editingStudent.photo.startsWith("data:")
+        ) {
+          await deleteOldImage(editingStudent.photo);
+        }
       }
 
-      await fetchStudents();
+      let updatedStudents: Student[];
 
+      if (editingStudent) {
+        // Update existing student
+        updatedStudents = students.map((s) =>
+          s.id === editingStudent.id
+            ? {
+                ...s,
+                name: formData.name,
+                department: formData.department,
+                bio: formData.bio,
+                lastWord: formData.lastWord,
+                photo: photoPath || formData.photo,
+                last_word: formData.lastWord, // Keep both fields in sync
+              }
+            : s,
+        );
+      } else {
+        // Create new student
+        const newId = Math.max(...students.map((s) => s.id), 0) + 1;
+        const newStudent: Student = {
+          id: newId,
+          name: formData.name,
+          department: formData.department,
+          photo: photoPath || "",
+          bio: formData.bio,
+          lastWord: formData.lastWord,
+          last_word: formData.lastWord,
+          messages: [],
+        };
+        updatedStudents = [...students, newStudent];
+      }
+
+      await saveStudents(updatedStudents);
       resetForm();
     } catch (error) {
       console.error("Submit Error:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to save student. Please try again.",
+      );
+    } finally {
+      setUploading(false);
     }
   }
 
   //
-  // DELETE
+  // DELETE STUDENT
   //
-  async function handleDelete(id: string) {
+  async function handleDelete(id: number) {
     const confirmed = confirm("Are you sure you want to delete this student?");
-
     if (!confirmed) return;
 
     try {
-      const response = await fetch(
-        `/api/students?id=${encodeURIComponent(id)}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const student = students.find((s) => s.id === id);
 
-      if (!response.ok) {
-        throw new Error("Delete failed");
+      // Delete associated image
+      if (
+        student?.photo &&
+        !student.photo.startsWith("https://") &&
+        !student.photo.startsWith("data:")
+      ) {
+        await deleteOldImage(student.photo);
       }
 
-      // instant UI update
-      setStudents((prev) => prev.filter((student) => student.id !== id));
-
-      await fetchStudents();
+      // Remove student from array
+      const updatedStudents = students.filter((s) => s.id !== id);
+      await saveStudents(updatedStudents);
     } catch (error) {
       console.error("Delete Error:", error);
+      alert("Failed to delete student. Please try again.");
     }
   }
 
   //
-  // START EDIT
+  // START EDITING
   //
   function startEdit(student: Student) {
-    const cloned = { ...student };
-
-    setEditingStudent(cloned);
-
+    setEditingStudent({ ...student });
     setFormData({
-      name: cloned.name,
-      department: cloned.department,
-      bio: cloned.bio || "",
-      lastWord: cloned.lastWord || "",
-      photo: cloned.photo || "",
+      name: student.name,
+      department: student.department,
+      bio: student.bio || "",
+      lastWord: student.lastWord || student.last_word || "",
+      photo: student.photo || "",
     });
-
-    setImagePreview(cloned.photo || "");
-
+    setImagePreview(student.photo || "");
+    setImageFile(null);
     setShowForm(true);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   //
@@ -179,11 +315,9 @@ export default function AdminStudents() {
   //
   function resetForm() {
     setEditingStudent(null);
-
     setShowForm(false);
-
     setImagePreview("");
-
+    setImageFile(null);
     setFormData({
       name: "",
       department: "Natural",
@@ -194,12 +328,25 @@ export default function AdminStudents() {
   }
 
   //
-  // LOADING
+  // GET IMAGE SOURCE (handle different formats)
+  //
+  function getImageSrc(student: Student): string {
+    if (student.photo && student.photo.startsWith("images/")) {
+      return "/" + student.photo;
+    }
+    return student.photo || student.photo_url || "";
+  }
+
+  //
+  // LOADING STATE
   //
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-gray-400 text-lg">Loading students...</div>
+        <div className="text-gray-400 text-lg flex items-center gap-3">
+          <Loader2 className="animate-spin" size={24} />
+          Loading students...
+        </div>
       </div>
     );
   }
@@ -213,7 +360,6 @@ export default function AdminStudents() {
             <GraduationCap className="text-red-500" />
             Student Management
           </h1>
-
           <p className="text-gray-400 mt-1">
             Manage graduate profiles and memories
           </p>
@@ -231,8 +377,7 @@ export default function AdminStudents() {
         </button>
       </div>
 
-      {/* FORM */}
-      {/* MODAL */}
+      {/* MODAL FORM */}
       {showForm && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -240,22 +385,22 @@ export default function AdminStudents() {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
         >
-          {/* MODAL CARD */}
           <motion.div
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
             className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl"
           >
-            {/* HEADER */}
+            {/* MODAL HEADER */}
             <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 px-6 py-4 flex items-center justify-between rounded-t-3xl">
               <div>
                 <h2 className="text-2xl font-bold text-white">
                   {editingStudent ? "Edit Student" : "Create Student"}
                 </h2>
-
                 <p className="text-sm text-gray-400 mt-1">
-                  Manage student profile information
+                  {editingStudent
+                    ? "Update student profile information"
+                    : "Add a new student to the directory"}
                 </p>
               </div>
 
@@ -269,33 +414,27 @@ export default function AdminStudents() {
 
             {/* FORM */}
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* GRID */}
+              {/* NAME & DEPARTMENT */}
               <div className="grid md:grid-cols-2 gap-5">
-                {/* NAME */}
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Full Name</label>
-
+                  <label className="text-sm text-gray-400">Full Name *</label>
                   <input
                     required
                     type="text"
                     placeholder="Enter full name"
-                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl"
+                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl text-white"
                     value={formData.name}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        name: e.target.value,
-                      })
+                      setFormData({ ...formData, name: e.target.value })
                     }
                   />
                 </div>
 
-                {/* DEPARTMENT */}
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Department</label>
-
+                  <label className="text-sm text-gray-400">Department *</label>
                   <select
-                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl"
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl text-white"
                     value={formData.department}
                     onChange={(e) =>
                       setFormData({
@@ -305,32 +444,30 @@ export default function AdminStudents() {
                     }
                   >
                     <option value="Natural">Natural Science</option>
-
                     <option value="Social">Social Science</option>
                   </select>
                 </div>
               </div>
 
-              {/* PHOTO */}
+              {/* PHOTO UPLOAD */}
               <div className="space-y-4">
-                <label className="text-sm text-gray-400">Student Photo</label>
+                <label className="text-sm text-gray-400">
+                  Student Photo {!editingStudent && "(Optional)"}
+                </label>
 
                 <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-zinc-700 hover:border-red-500 transition bg-zinc-900 rounded-3xl p-8 cursor-pointer">
-                  <Upload size={28} />
-
+                  <Upload size={28} className="text-gray-400" />
                   <div className="text-center">
                     <p className="text-gray-200 font-medium">
-                      Upload student image
+                      {imagePreview ? "Change photo" : "Upload student image"}
                     </p>
-
                     <p className="text-sm text-gray-500 mt-1">
-                      PNG, JPG or WEBP
+                      PNG, JPG or WEBP (max 5MB)
                     </p>
                   </div>
-
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     hidden
                     onChange={handleImageUpload}
                   />
@@ -338,33 +475,42 @@ export default function AdminStudents() {
 
                 {imagePreview && (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     className="flex justify-center"
                   >
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-52 h-52 object-cover rounded-3xl border border-zinc-700 shadow-xl"
-                    />
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-52 h-52 object-cover rounded-3xl border border-zinc-700 shadow-xl"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImagePreview("");
+                          setImageFile(null);
+                          setFormData((prev) => ({ ...prev, photo: "" }));
+                        }}
+                        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 rounded-full p-2 transition"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </div>
 
-              {/* BIO */}
+              {/* BIOGRAPHY */}
               <div className="space-y-2">
                 <label className="text-sm text-gray-400">Biography</label>
-
                 <textarea
                   rows={5}
-                  placeholder="Student biography..."
-                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl resize-none"
+                  placeholder="Write a short biography..."
+                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl resize-none text-white"
                   value={formData.bio}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      bio: e.target.value,
-                    })
+                    setFormData({ ...formData, bio: e.target.value })
                   }
                 />
               </div>
@@ -372,17 +518,13 @@ export default function AdminStudents() {
               {/* LAST WORD */}
               <div className="space-y-2">
                 <label className="text-sm text-gray-400">Last Word</label>
-
                 <textarea
                   rows={4}
-                  placeholder="Student final message..."
-                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl resize-none"
+                  placeholder="Student's final message to the batch..."
+                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl resize-none text-white"
                   value={formData.lastWord}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      lastWord: e.target.value,
-                    })
+                    setFormData({ ...formData, lastWord: e.target.value })
                   }
                 />
               </div>
@@ -391,15 +533,26 @@ export default function AdminStudents() {
               <div className="flex gap-4 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-red-600 hover:bg-red-700 transition py-4 rounded-2xl font-semibold text-lg"
+                  disabled={uploading}
+                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed transition py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2"
                 >
-                  {editingStudent ? "Update Student" : "Create Student"}
+                  {uploading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      Uploading...
+                    </>
+                  ) : editingStudent ? (
+                    "Update Student"
+                  ) : (
+                    "Create Student"
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 transition py-4 rounded-2xl font-semibold"
+                  disabled={uploading}
+                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 transition py-4 rounded-2xl font-semibold"
                 >
                   Cancel
                 </button>
@@ -412,7 +565,9 @@ export default function AdminStudents() {
       {/* STUDENTS GRID */}
       {students.length === 0 ? (
         <div className="text-center text-gray-500 py-16">
-          No students found.
+          <GraduationCap size={48} className="mx-auto mb-4 opacity-50" />
+          <p className="text-lg">No students found.</p>
+          <p className="text-sm mt-2">Click "Add Student" to create one.</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -426,19 +581,22 @@ export default function AdminStudents() {
             >
               {/* IMAGE */}
               <div className="relative h-60 overflow-hidden bg-black">
-                {student.photo ? (
+                {getImageSrc(student) ? (
                   <img
-                    src={student.photo}
+                    src={getImageSrc(student)}
                     alt={student.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-600">
-                    No Image
+                    <GraduationCap size={48} />
                   </div>
                 )}
 
-                <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-xs px-3 py-1 rounded-full">
+                <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-xs px-3 py-1 rounded-full capitalize">
                   {student.department}
                 </div>
               </div>
@@ -447,19 +605,17 @@ export default function AdminStudents() {
               <div className="p-5 space-y-3">
                 <div>
                   <h3 className="text-xl font-semibold">{student.name}</h3>
-
                   <p className="text-gray-400 text-sm mt-1 line-clamp-2">
                     {student.bio || "No biography added."}
                   </p>
                 </div>
 
                 {/* LAST WORD */}
-                {student.lastWord && (
+                {(student.lastWord || student.last_word) && (
                   <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
                     <p className="text-xs text-gray-500 mb-1">Last Word</p>
-
                     <p className="text-sm text-gray-300 line-clamp-3 italic">
-                      "{student.lastWord}"
+                      &ldquo;{student.lastWord || student.last_word}&rdquo;
                     </p>
                   </div>
                 )}

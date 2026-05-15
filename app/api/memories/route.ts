@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const dataDir = path.join(process.cwd(), "public", "data");
-const dayFiles = ["gabi_day.json", "crazy_day.json", "trip_day.json"];
+const dayFiles = ["gabi_day.json", "crazy_day.json", "welcome_day.json"];
 
 export async function GET(request: NextRequest) {
   try {

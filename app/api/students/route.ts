@@ -1,131 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
+import { readFile, writeFile } from "fs/promises";
 import path from "path";
 
-const filePath = path.join(process.cwd(), "public", "data", "students.json");
+const DATA_FILE = path.join(process.cwd(), "public", "data", "students.json");
 
-function readStudents() {
-  const data = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(data);
-}
-
-function writeStudents(data: any) {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-}
-
-//
-// GET
-//
 export async function GET() {
   try {
-    const students = readStudents();
+    const data = await readFile(DATA_FILE, "utf-8");
+    const students = JSON.parse(data);
     return NextResponse.json(students);
   } catch (error) {
-    console.error(error);
-
+    console.error("Error reading students:", error);
     return NextResponse.json(
-      { error: "Failed to load students" },
+      { message: "Failed to fetch students" },
       { status: 500 },
     );
   }
 }
 
-//
-// POST
-//
-export async function POST(req: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await request.json();
+    const { students } = body;
 
-    const students = readStudents();
-
-    const newStudent = {
-      id: Date.now().toString(),
-      ...body,
-      messages: [],
-    };
-
-    students.push(newStudent);
-
-    writeStudents(students);
-
-    return NextResponse.json(newStudent);
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      { error: "Failed to create student" },
-      { status: 500 },
-    );
-  }
-}
-
-//
-// PUT (EDIT)
-//
-export async function PUT(req: NextRequest) {
-  try {
-    const body = await req.json();
-
-    const students = readStudents();
-
-    const updatedStudents = students.map((student: any) =>
-      student.id === body.id
-        ? {
-            ...student,
-            ...body,
-          }
-        : student,
-    );
-
-    writeStudents(updatedStudents);
-
-    return NextResponse.json({
-      success: true,
-      data: updatedStudents,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      { error: "Failed to update student" },
-      { status: 500 },
-    );
-  }
-}
-
-//
-// DELETE
-//
-export async function DELETE(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-
-    const id = searchParams.get("id");
-
-    if (!id) {
+    if (!Array.isArray(students)) {
       return NextResponse.json(
-        { error: "Missing student id" },
+        { message: "Invalid data format. Expected an array of students." },
         { status: 400 },
       );
     }
 
-    const students = readStudents();
-
-    const filteredStudents = students.filter(
-      (student: any) => String(student.id) !== String(id),
-    );
-
-    writeStudents(filteredStudents);
+    await writeFile(DATA_FILE, JSON.stringify(students, null, 2), "utf-8");
 
     return NextResponse.json({
-      success: true,
+      message: "Students updated successfully",
+      count: students.length,
     });
   } catch (error) {
-    console.error("DELETE ERROR:", error);
-
+    console.error("Error updating students:", error);
     return NextResponse.json(
-      { error: "Failed to delete student" },
+      { message: "Failed to update students" },
       { status: 500 },
     );
   }

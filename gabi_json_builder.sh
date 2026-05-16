@@ -1,22 +1,37 @@
 #!/bin/bash
 
 DIR="./public/images/gabi_day"
-OUTPUT="./public/data/gabi_gallery.json"
+OUTPUT="./public/data/gabi_day.json"
 
 mkdir -p "$(dirname "$OUTPUT")"
 
 echo "[" > "$OUTPUT"
 
-# Collect and sort files by numeric part (gabi123)
-files=$(ls "$DIR" | grep -E 'gabi[0-9]+' | sort -V)
+# Collect all files
+all_files=$(ls "$DIR" | grep -E 'gabi[0-9]+' | sort -V)
+
+# Separate images and videos
+images=()
+videos=()
+
+for file in $all_files; do
+    ext="${file##*.}"
+    
+    if [[ "$ext" == "jpg" || "$ext" == "jpeg" || "$ext" == "png" || "$ext" == "webp" ]]; then
+        images+=("$file")
+    elif [[ "$ext" == "mp4" || "$ext" == "mov" || "$ext" == "webm" ]]; then
+        videos+=("$file")
+    fi
+done
+
+# Combine: ALL images first, then ALL videos
+sorted_files=("${images[@]}" "${videos[@]}")
 
 id=1
 first=1
 
-for file in $files; do
+for file in "${sorted_files[@]}"; do
     ext="${file##*.}"
-    name="${file%.*}"
-
     number=$(echo "$file" | grep -oE '[0-9]+' | head -1)
 
     type=""

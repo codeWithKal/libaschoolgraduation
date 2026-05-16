@@ -27,10 +27,10 @@ import {
 interface Student {
   id: number;
   name: string;
-  department: string;
+  stream: string;
   photo: string;
   bio: string;
-  lastWord: string;
+  last_word: string;
   messages: string[];
 }
 
@@ -169,7 +169,7 @@ function useDebounce<T>(value: T, delay: number = 300): T {
 export default function StudentsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedstream, setSelectedstream] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "tiles" | "list">("grid");
 
@@ -178,10 +178,10 @@ export default function StudentsPage() {
   // Debounced search to prevent filtering on every keystroke
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Memoized departments
-  const departments = useMemo(() => {
+  // Memoized streams
+  const streams = useMemo(() => {
     if (!students) return [];
-    return [...new Set(students.map((s) => s.department))];
+    return [...new Set(students.map((s) => s.stream))];
   }, [students]);
 
   // Filtered students with memoization
@@ -193,12 +193,12 @@ export default function StudentsPage() {
         .toLowerCase()
         .includes(debouncedSearchQuery.toLowerCase());
 
-      const matchesDepartment =
-        !selectedDepartment || student.department === selectedDepartment;
+      const matchesstream =
+        !selectedstream || student.stream === selectedstream;
 
-      return matchesSearch && matchesDepartment;
+      return matchesSearch && matchesstream;
     });
-  }, [students, debouncedSearchQuery, selectedDepartment]);
+  }, [students, debouncedSearchQuery, selectedstream]);
 
   // Pagination
   const itemsPerPage =
@@ -212,7 +212,7 @@ export default function StudentsPage() {
   // Reset pagination when filters or view mode change
   useEffect(() => {
     reset();
-  }, [debouncedSearchQuery, selectedDepartment, viewMode, reset]);
+  }, [debouncedSearchQuery, selectedstream, viewMode, reset]);
 
   const viewOptions = [
     { key: "grid", label: "Grid", icon: LayoutGrid },
@@ -252,7 +252,7 @@ export default function StudentsPage() {
             {student.name}
           </h3>
           <p className="text-yellow-300 text-sm font-medium mb-2">
-            {student.department}
+            {student.stream}
           </p>
           <p className="text-netflix-lightgray text-sm line-clamp-2 leading-relaxed">
             {student.bio}
@@ -299,7 +299,7 @@ export default function StudentsPage() {
             {student.name}
           </p>
           <p className="text-xs text-netflix-lightgray truncate">
-            {student.department}
+            {student.stream}
           </p>
         </div>
       </div>
@@ -463,16 +463,16 @@ export default function StudentsPage() {
 
               {/* FILTERS */}
               <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
-                {/* Departments */}
+                {/* streams */}
                 <div className="flex flex-wrap gap-3">
                   <button
-                    onClick={() => setSelectedDepartment("")}
+                    onClick={() => setSelectedstream("")}
                     className={`
                       px-5 py-2.5 rounded-full
                       text-sm font-medium
                       transition-all duration-300
                       ${
-                        !selectedDepartment
+                        !selectedstream
                           ? "bg-netflix-red text-white shadow-lg shadow-netflix-red/30 scale-105"
                           : "bg-black/40 border border-white/10 text-netflix-lightgray hover:border-netflix-red/30 hover:text-white"
                       }
@@ -481,16 +481,16 @@ export default function StudentsPage() {
                     All Streams
                   </button>
 
-                  {departments.map((dept) => (
+                  {streams.map((dept) => (
                     <button
                       key={dept}
-                      onClick={() => setSelectedDepartment(dept)}
+                      onClick={() => setSelectedstream(dept)}
                       className={`
                         px-5 py-2.5 rounded-full
                         text-sm font-medium
                         transition-all duration-300
                         ${
-                          selectedDepartment === dept
+                          selectedstream === dept
                             ? "bg-netflix-red text-white shadow-lg shadow-netflix-red/30 scale-105"
                             : "bg-black/40 border border-white/10 text-netflix-lightgray hover:border-netflix-red/30 hover:text-white"
                         }

@@ -15,10 +15,10 @@ import {
 interface Student {
   id: number;
   name: string;
-  department: "Natural" | "Social";
+  stream: "Natural" | "Social";
   photo?: string;
   bio?: string;
-  lastWord?: string;
+  last_word?: string;
   messages?: string[];
   stream?: string;
   photo_url?: string;
@@ -38,9 +38,9 @@ export default function AdminStudents() {
 
   const [formData, setFormData] = useState({
     name: "",
-    department: "Natural" as "Natural" | "Social",
+    stream: "Natural" as "Natural" | "Social",
     bio: "",
-    lastWord: "",
+    last_word: "",
     photo: "",
   });
 
@@ -226,11 +226,11 @@ export default function AdminStudents() {
             ? {
                 ...s,
                 name: formData.name,
-                department: formData.department,
+                stream: formData.stream,
                 bio: formData.bio,
-                lastWord: formData.lastWord,
+                last_word: formData.last_word,
                 photo: photoPath || formData.photo,
-                last_word: formData.lastWord, // Keep both fields in sync
+                last_word: formData.last_word, // Keep both fields in sync
               }
             : s,
         );
@@ -240,11 +240,11 @@ export default function AdminStudents() {
         const newStudent: Student = {
           id: newId,
           name: formData.name,
-          department: formData.department,
+          stream: formData.stream,
           photo: photoPath || "",
           bio: formData.bio,
-          lastWord: formData.lastWord,
-          last_word: formData.lastWord,
+          last_word: formData.last_word,
+          last_word: formData.last_word,
           messages: [],
         };
         updatedStudents = [...students, newStudent];
@@ -299,9 +299,9 @@ export default function AdminStudents() {
     setEditingStudent({ ...student });
     setFormData({
       name: student.name,
-      department: student.department,
+      stream: student.stream,
       bio: student.bio || "",
-      lastWord: student.lastWord || student.last_word || "",
+      last_word: student.last_word || student.last_word || "",
       photo: student.photo || "",
     });
     setImagePreview(student.photo || "");
@@ -320,9 +320,9 @@ export default function AdminStudents() {
     setImageFile(null);
     setFormData({
       name: "",
-      department: "Natural",
+      stream: "Natural",
       bio: "",
-      lastWord: "",
+      last_word: "",
       photo: "",
     });
   }
@@ -414,7 +414,7 @@ export default function AdminStudents() {
 
             {/* FORM */}
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* NAME & DEPARTMENT */}
+              {/* NAME & stream */}
               <div className="grid md:grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <label className="text-sm text-gray-400">Full Name *</label>
@@ -431,15 +431,15 @@ export default function AdminStudents() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Department *</label>
+                  <label className="text-sm text-gray-400">stream *</label>
                   <select
                     required
                     className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl text-white"
-                    value={formData.department}
+                    value={formData.stream}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        department: e.target.value as "Natural" | "Social",
+                        stream: e.target.value as "Natural" | "Social",
                       })
                     }
                   >
@@ -522,9 +522,9 @@ export default function AdminStudents() {
                   rows={4}
                   placeholder="Student's final message to the batch..."
                   className="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500 outline-none p-4 rounded-2xl resize-none text-white"
-                  value={formData.lastWord}
+                  value={formData.last_word}
                   onChange={(e) =>
-                    setFormData({ ...formData, lastWord: e.target.value })
+                    setFormData({ ...formData, last_word: e.target.value })
                   }
                 />
               </div>
@@ -597,7 +597,7 @@ export default function AdminStudents() {
                 )}
 
                 <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-xs px-3 py-1 rounded-full capitalize">
-                  {student.department}
+                  {student.stream}
                 </div>
               </div>
 
@@ -611,11 +611,11 @@ export default function AdminStudents() {
                 </div>
 
                 {/* LAST WORD */}
-                {(student.lastWord || student.last_word) && (
+                {(student.last_word || student.last_word) && (
                   <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
                     <p className="text-xs text-gray-500 mb-1">Last Word</p>
                     <p className="text-sm text-gray-300 line-clamp-3 italic">
-                      &ldquo;{student.lastWord || student.last_word}&rdquo;
+                      &ldquo;{student.last_word || student.last_word}&rdquo;
                     </p>
                   </div>
                 )}

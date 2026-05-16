@@ -316,16 +316,39 @@ export default function MemoriesPage() {
 
   const { data: gabiGallery } = useData<GalleryItem[]>("gabi_day.json");
   const { data: crazyGallery } = useData<GalleryItem[]>("crazy_day.json");
-  const { data: tripGallery } = useData<GalleryItem[]>("welcome_day.json");
+  const { data: welcomeGallery } = useData<GalleryItem[]>("welcome_day.json");
 
   const days = ["Gabi Day", "Crazy Day", "Welcome Day"];
 
   const gallery = useMemo(() => {
-    if (selectedDay === "Gabi Day") return gabiGallery;
-    if (selectedDay === "Crazy Day") return crazyGallery;
-    if (selectedDay === "Welcome Day") return tripGallery;
-    return [];
-  }, [selectedDay, gabiGallery, crazyGallery, tripGallery]);
+    const dayFolderMap: Record<string, string> = {
+      "Gabi Day": "/images/gabi_day",
+      "Crazy Day": "/images/crazy_day",
+      "Welcome Day": "/images/welcome_day",
+    };
+
+    const selectedItems =
+      selectedDay === "Gabi Day"
+        ? gabiGallery
+        : selectedDay === "Crazy Day"
+          ? crazyGallery
+          : selectedDay === "Welcome Day"
+            ? welcomeGallery
+            : [];
+
+    const currentFolder = dayFolderMap[selectedDay] ?? "";
+
+    return (
+      selectedItems?.map((item) => {
+        if (!currentFolder || item.url.startsWith(currentFolder)) return item;
+
+        const fileName = item.url.split("/").pop();
+        return fileName
+          ? { ...item, url: `${currentFolder}/${fileName}` }
+          : item;
+      }) ?? []
+    );
+  }, [selectedDay, gabiGallery, crazyGallery, welcomeGallery]);
 
   const filteredGallery = useMemo(() => {
     if (!gallery) return [];

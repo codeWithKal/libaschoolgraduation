@@ -7,10 +7,10 @@ interface StudentCardProps {
   student: {
     id: number;
     name: string;
-    department: string;
+    stream: string;
     photo: string;
     bio: string;
-    lastWord?: string;
+    last_word?: string;
     messages?: string[];
   };
   onClick?: () => void;
@@ -49,7 +49,7 @@ export default function StudentCard({ student, onClick }: StudentCardProps) {
       >
         <h3 className="text-lg font-bold text-white mb-1">{student.name}</h3>
         <p className="text-netflix-red text-sm font-semibold mb-2">
-          {student.department}
+          {student.stream}
         </p>
         <p
           className={`text-netflix-lightgray text-xs leading-relaxed transition-opacity duration-300 ${

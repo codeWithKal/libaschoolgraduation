@@ -8,10 +8,10 @@ interface StudentModalProps {
   student: {
     id: number;
     name: string;
-    department: string;
+    stream: string;
     photo: string;
     bio: string;
-    lastWord: string;
+    last_word: string;
     messages: string[];
   };
   students: any[];
@@ -107,7 +107,7 @@ export default function StudentModal({
               style={{ fontFamily: "var(--font-modern)" }}
               className="text-netflix-red text-lg font-semibold mb-4"
             >
-              {student.department}
+              {student.stream}
             </p>
 
             <p className="text-netflix-lightgray text-base leading-relaxed">
@@ -121,7 +121,7 @@ export default function StudentModal({
               style={{ fontFamily: "var(--font-serif)" }}
               className="text-lg text-white italic mb-2"
             >
-              "{student.lastWord}"
+              "{student.last_word}"
             </p>
             <p className="text-netflix-gray text-sm">— Final Words</p>
           </div>

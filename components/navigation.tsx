@@ -17,6 +17,7 @@ export default function Navigation({
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Students", href: "/students" },
+    { label: "Teachers", href: "/teachers" },
     { label: "Memories", href: "/memories" },
     { label: "Shared Gallery", href: "/shared-gallery" },
     { label: "Guestbook", href: "/guestbook" },

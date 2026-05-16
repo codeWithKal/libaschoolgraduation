@@ -1,18 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import dynamic from "next/dynamic";
 import Navigation from "@/components/navigation";
-import StudentCard from "@/components/student-card";
 import Footer from "@/components/footer";
 import { useData } from "@/hooks/useData";
-
-// Lazy load modal component for better initial load
-const StudentModal = dynamic(() => import("@/components/student-modal"), {
-  loading: () => null,
-  ssr: false,
-});
-
 import {
   Search,
   Menu,
@@ -24,18 +15,17 @@ import {
   Users,
 } from "lucide-react";
 
-interface Student {
+interface Teacher {
   id: number;
   name: string;
-  department: string;
-  photo: string;
+  subject: string;
+  photo_url: string;
   bio: string;
-  lastWord: string;
-  messages: string[];
+  quote: string;
 }
 
 // ✅ Lazy Image Component with Intersection Observer
-function LazyStudentImage({
+function LazyTeacherImage({
   src,
   alt,
   className,
@@ -166,159 +156,150 @@ function useDebounce<T>(value: T, delay: number = 300): T {
   return debouncedValue;
 }
 
-export default function StudentsPage() {
+export default function TeachersPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "tiles" | "list">("grid");
 
-  const { data: students } = useData<Student[]>("students.json");
+  const { data: teachers } = useData<Teacher[]>("teachers.json");
 
-  // Debounced search to prevent filtering on every keystroke
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Memoized departments
-  const departments = useMemo(() => {
-    if (!students) return [];
-    return [...new Set(students.map((s) => s.department))];
-  }, [students]);
+  const subjects = useMemo(() => {
+    if (!teachers) return [];
+    return [...new Set(teachers.map((t) => t.subject))].sort();
+  }, [teachers]);
 
-  // Filtered students with memoization
-  const filteredStudents = useMemo(() => {
-    if (!students) return [];
+  const filteredTeachers = useMemo(() => {
+    if (!teachers) return [];
 
-    return students.filter((student) => {
-      const matchesSearch = student.name
-        .toLowerCase()
-        .includes(debouncedSearchQuery.toLowerCase());
+    return teachers.filter((teacher) => {
+      const matchesSearch =
+        teacher.name
+          .toLowerCase()
+          .includes(debouncedSearchQuery.toLowerCase()) ||
+        teacher.subject
+          .toLowerCase()
+          .includes(debouncedSearchQuery.toLowerCase());
 
-      const matchesDepartment =
-        !selectedDepartment || student.department === selectedDepartment;
+      const matchesSubject =
+        !selectedSubject || teacher.subject === selectedSubject;
 
-      return matchesSearch && matchesDepartment;
+      return matchesSearch && matchesSubject;
     });
-  }, [students, debouncedSearchQuery, selectedDepartment]);
+  }, [teachers, debouncedSearchQuery, selectedSubject]);
 
-  // Pagination
   const itemsPerPage =
     viewMode === "list" ? 10 : viewMode === "tiles" ? 24 : 12;
-  const { visibleItems, hasMore, loadMore, reset, total } = usePagination(
-    filteredStudents,
+  const { visibleItems, hasMore, loadMore, total } = usePagination(
+    filteredTeachers,
     itemsPerPage,
   );
+
   const loaderRef = useInfiniteScroll(loadMore, hasMore);
 
-  // Reset pagination when filters or view mode change
-  useEffect(() => {
-    reset();
-  }, [debouncedSearchQuery, selectedDepartment, viewMode, reset]);
-
   const viewOptions = [
-    { key: "grid", label: "Grid", icon: LayoutGrid },
-    { key: "tiles", label: "Tiles", icon: Grid2X2 },
-    { key: "list", label: "List", icon: Rows3 },
-  ] as const;
+    { key: "grid" as const, label: "Grid", icon: LayoutGrid },
+    { key: "tiles" as const, label: "Tiles", icon: Rows3 },
+    { key: "list" as const, label: "List", icon: Grid2X2 },
+  ];
 
-  // Optimized student card renderer for list view
-  const renderListView = useCallback(
-    (student: Student, index: number) => (
+  const renderGridView = useCallback(
+    (teacher: Teacher, index: number) => (
       <div
-        key={student.id}
-        onClick={() => setSelectedStudent(student)}
-        className="
-        group cursor-pointer
-        flex items-center gap-5
-        rounded-[2rem]
-        border border-white/10
-        bg-white/5 backdrop-blur-xl
-        p-5
-        hover:border-netflix-red/30
-        hover:bg-white/[0.07]
-        hover:-translate-y-1
-        transition-all duration-500
-      "
+        key={teacher.id}
+        className="animate-slide-in-up group"
+        style={{ animationDelay: `${(index % 8) * 0.05}s` }}
       >
-        <div className="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
-          <LazyStudentImage
-            src={student.photo}
-            alt={student.name}
-            className="w-full h-full"
-          />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <h3 className="text-white font-bold text-xl mb-1 group-hover:text-netflix-red transition">
-            {student.name}
-          </h3>
-          <p className="text-yellow-300 text-sm font-medium mb-2">
-            {student.department}
-          </p>
-          <p className="text-netflix-lightgray text-sm line-clamp-2 leading-relaxed">
-            {student.bio}
-          </p>
-        </div>
-      </div>
-    ),
-    [],
-  );
-
-  // Optimized student card renderer for tiles view
-  const renderTilesView = useCallback(
-    (student: Student, index: number) => (
-      <div
-        key={student.id}
-        onClick={() => setSelectedStudent(student)}
-        className="group cursor-pointer"
-      >
-        <div
-          className="
-          relative overflow-hidden
-          rounded-2xl
-          border border-white/10
-          bg-white/5
-          backdrop-blur-xl
-          p-2
-          hover:border-netflix-red/40
-          hover:-translate-y-1
-          transition-all duration-500
-        "
-        >
-          <div className="relative overflow-hidden rounded-xl aspect-square">
-            <LazyStudentImage
-              src={student.photo}
-              alt={student.name}
+        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 hover:border-yellow-500/30 transition-all duration-300 h-full flex flex-col hover:shadow-xl hover:shadow-yellow-500/20">
+          {/* Teacher Photo */}
+          <div className="relative h-64 overflow-hidden">
+            <LazyTeacherImage
+              src={teacher.photo_url}
+              alt={teacher.name}
               className="w-full h-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
           </div>
-        </div>
 
-        <div className="mt-3 text-center">
-          <p className="text-sm font-semibold text-white truncate">
-            {student.name}
-          </p>
-          <p className="text-xs text-netflix-lightgray truncate">
-            {student.department}
-          </p>
+          {/* Content */}
+          <div className="flex-1 p-6 flex flex-col">
+            <h3 className="text-lg font-bold text-white mb-1 group-hover:text-yellow-400 transition-colors">
+              {teacher.name}
+            </h3>
+            <p className="text-yellow-400 text-sm font-semibold mb-4">
+              {teacher.subject}
+            </p>
+            <p className="text-gray-300 text-sm flex-1 mb-4 line-clamp-2">
+              {teacher.bio}
+            </p>
+            <div className="pt-4 border-t border-white/10">
+              <p className="text-yellow-200 text-xs italic">
+                &quot;{teacher.quote}&quot;
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     ),
     [],
   );
 
-  // Optimized student card renderer for grid view
-  const renderGridView = useCallback(
-    (student: Student, index: number) => (
+  const renderTilesView = useCallback(
+    (teacher: Teacher, index: number) => (
       <div
-        key={student.id}
+        key={teacher.id}
+        className="animate-slide-in-up group"
+        style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+      >
+        <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 hover:border-yellow-500/30 transition-all duration-300">
+          <div className="aspect-square overflow-hidden">
+            <LazyTeacherImage
+              src={teacher.photo_url}
+              alt={teacher.name}
+              className="w-full h-full"
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+            <div>
+              <h4 className="text-white font-bold text-sm">{teacher.name}</h4>
+              <p className="text-yellow-400 text-xs">{teacher.subject}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    [],
+  );
+
+  const renderListView = useCallback(
+    (teacher: Teacher, index: number) => (
+      <div
+        key={teacher.id}
         className="animate-slide-in-up"
         style={{ animationDelay: `${(index % 8) * 0.05}s` }}
       >
-        <StudentCard
-          student={student}
-          onClick={() => setSelectedStudent(student)}
-        />
+        <div className="flex items-center gap-6 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-500/30 hover:bg-white/10 transition-all duration-300 group">
+          <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
+            <LazyTeacherImage
+              src={teacher.photo_url}
+              alt={teacher.name}
+              className="w-full h-full"
+            />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xl font-bold text-white group-hover:text-yellow-400 transition-colors">
+              {teacher.name}
+            </h4>
+            <p className="text-yellow-400 font-semibold mb-2">
+              {teacher.subject}
+            </p>
+            <p className="text-gray-300 text-sm mb-2">{teacher.bio}</p>
+            <p className="text-yellow-200 text-xs italic">
+              &quot;{teacher.quote}&quot;
+            </p>
+          </div>
+        </div>
       </div>
     ),
     [],
@@ -326,7 +307,7 @@ export default function StudentsPage() {
 
   return (
     <div className="min-h-screen bg-netflix-dark overflow-hidden">
-      {/* Background Glow - Optimized */}
+      {/* Background Glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden will-change-transform">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-netflix-red/10 blur-3xl rounded-full" />
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-yellow-500/10 blur-3xl rounded-full" />
@@ -362,7 +343,7 @@ export default function StudentsPage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-sm font-medium mb-6">
               <Sparkles size={16} />
-              Graduation Directory
+              Meet Our Mentors
             </div>
 
             {/* Title */}
@@ -378,14 +359,14 @@ export default function StudentsPage() {
             >
               NOVAREING
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600">
-                Batch 2026
+                Faculty
               </span>
             </h1>
 
             {/* Description */}
             <p className="max-w-3xl text-lg md:text-xl text-netflix-lightgray leading-relaxed">
-              Browse the graduating class, discover student profiles, and
-              celebrate the achievements of the NOVAREING batch.
+              Get to know the dedicated educators who have shaped the NOVAREING
+              batch and contributed to their success.
             </p>
 
             {/* Stats */}
@@ -396,11 +377,10 @@ export default function StudentsPage() {
                 </div>
                 <div>
                   <p className="text-white font-bold text-lg">{total}</p>
-                  <p className="text-netflix-lightgray text-sm">Students</p>
+                  <p className="text-netflix-lightgray text-sm">Teachers</p>
                 </div>
               </div>
 
-              {/* Showing counter when paginated */}
               {visibleItems.length < total && (
                 <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
                   <p className="text-netflix-lightgray text-sm">
@@ -436,7 +416,7 @@ export default function StudentsPage() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-netflix-gray w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search students..."
+                  placeholder="Search teachers by name or subject..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="
@@ -463,40 +443,40 @@ export default function StudentsPage() {
 
               {/* FILTERS */}
               <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
-                {/* Departments */}
+                {/* Subjects */}
                 <div className="flex flex-wrap gap-3">
                   <button
-                    onClick={() => setSelectedDepartment("")}
+                    onClick={() => setSelectedSubject("")}
                     className={`
                       px-5 py-2.5 rounded-full
                       text-sm font-medium
                       transition-all duration-300
                       ${
-                        !selectedDepartment
+                        !selectedSubject
                           ? "bg-netflix-red text-white shadow-lg shadow-netflix-red/30 scale-105"
                           : "bg-black/40 border border-white/10 text-netflix-lightgray hover:border-netflix-red/30 hover:text-white"
                       }
                     `}
                   >
-                    All Streams
+                    All Subjects
                   </button>
 
-                  {departments.map((dept) => (
+                  {subjects.map((subject) => (
                     <button
-                      key={dept}
-                      onClick={() => setSelectedDepartment(dept)}
+                      key={subject}
+                      onClick={() => setSelectedSubject(subject)}
                       className={`
                         px-5 py-2.5 rounded-full
                         text-sm font-medium
                         transition-all duration-300
                         ${
-                          selectedDepartment === dept
+                          selectedSubject === subject
                             ? "bg-netflix-red text-white shadow-lg shadow-netflix-red/30 scale-105"
                             : "bg-black/40 border border-white/10 text-netflix-lightgray hover:border-netflix-red/30 hover:text-white"
                         }
                       `}
                     >
-                      {dept}
+                      {subject}
                     </button>
                   ))}
                 </div>
@@ -531,7 +511,7 @@ export default function StudentsPage() {
             </div>
           </div>
 
-          {/* STUDENTS SECTION with Pagination */}
+          {/* TEACHERS SECTION with Pagination */}
           {visibleItems.length > 0 ? (
             <>
               <div
@@ -544,16 +524,16 @@ export default function StudentsPage() {
                 }
               >
                 {viewMode === "list" &&
-                  visibleItems.map((student, index) =>
-                    renderListView(student, index),
+                  visibleItems.map((teacher, index) =>
+                    renderListView(teacher, index),
                   )}
                 {viewMode === "tiles" &&
-                  visibleItems.map((student, index) =>
-                    renderTilesView(student, index),
+                  visibleItems.map((teacher, index) =>
+                    renderTilesView(teacher, index),
                   )}
                 {viewMode === "grid" &&
-                  visibleItems.map((student, index) =>
-                    renderGridView(student, index),
+                  visibleItems.map((teacher, index) =>
+                    renderGridView(teacher, index),
                   )}
               </div>
 
@@ -566,13 +546,13 @@ export default function StudentsPage() {
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-10 h-10 border-3 border-netflix-red/30 border-t-netflix-red rounded-full animate-spin" />
                     <p className="text-netflix-lightgray text-sm">
-                      Loading more students...
+                      Loading more teachers...
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Load More Button (Fallback for browsers without Intersection Observer) */}
+              {/* Load More Button (Fallback) */}
               {hasMore && (
                 <div className="text-center mt-8">
                   <button
@@ -584,7 +564,7 @@ export default function StudentsPage() {
                 </div>
               )}
 
-              {/* Scroll to top button when many items loaded */}
+              {/* Scroll to top button */}
               {visibleItems.length > 30 && (
                 <div className="fixed bottom-8 right-8 z-40">
                   <button
@@ -607,7 +587,7 @@ export default function StudentsPage() {
               </div>
 
               <h3 className="text-2xl font-bold text-white mb-3">
-                No Students Found
+                No Teachers Found
               </h3>
 
               <p className="text-netflix-lightgray text-lg">
@@ -617,16 +597,6 @@ export default function StudentsPage() {
           )}
         </div>
       </div>
-
-      {/* STUDENT MODAL */}
-      {selectedStudent && filteredStudents?.length > 0 && (
-        <StudentModal
-          student={selectedStudent}
-          onClose={() => setSelectedStudent(null)}
-          students={filteredStudents}
-          onChangeStudent={setSelectedStudent}
-        />
-      )}
 
       {/* FOOTER */}
       <Footer />

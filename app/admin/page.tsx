@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import AdminStudents from "@/components/admin/admin-students";
+import AdminTeachers from "@/components/admin/admin-teachers";
 import AdminMemories from "@/components/admin/admin-memories";
 import AdminSharedGallery from "@/components/admin/admin-shared-gallery";
 import AdminGuestbook from "@/components/admin/admin-guestbook";
@@ -21,6 +22,7 @@ import Footer from "@/components/footer";
 type Tab =
   | "overview"
   | "students"
+  | "teachers"
   | "memories"
   | "shared-gallery"
   | "guestbook"
@@ -28,6 +30,7 @@ type Tab =
 
 type Stats = {
   students: number;
+  teachers: number;
   memories: number;
   sharedGallery: number;
   guestbook: number;
@@ -39,6 +42,7 @@ export default function AdminPage() {
 
   const [stats, setStats] = useState<Stats>({
     students: 0,
+    teachers: 0,
     memories: 0,
     sharedGallery: 0,
     guestbook: 0,
@@ -61,6 +65,7 @@ export default function AdminPage() {
     try {
       const [
         studentsRes,
+        teachersRes,
         gabiRes,
         tripRes,
         crazyRes,
@@ -68,6 +73,7 @@ export default function AdminPage() {
         guestbookRes,
       ] = await Promise.all([
         fetch("/data/students.json"),
+        fetch("/data/teachers.json"),
         fetch("/data/gabi_day.json"),
         fetch("/data/welcome_day.json"),
         fetch("/data/crazy_day.json"),
@@ -76,6 +82,7 @@ export default function AdminPage() {
       ]);
 
       const studentsData = await studentsRes.json();
+      const teachersData = await teachersRes.json();
       const gabiData = await gabiRes.json();
       const tripData = await tripRes.json();
       const crazyData = await crazyRes.json();
@@ -89,6 +96,7 @@ export default function AdminPage() {
 
       setStats({
         students: Array.isArray(studentsData) ? studentsData.length : 0,
+        teachers: Array.isArray(teachersData) ? teachersData.length : 0,
         memories: memoriesTotal,
         sharedGallery: Array.isArray(sharedGalleryData)
           ? sharedGalleryData.length
@@ -118,6 +126,7 @@ export default function AdminPage() {
   const tabs = [
     { id: "overview" as Tab, label: "Overview", icon: Users },
     { id: "students" as Tab, label: "Students", icon: Users },
+    { id: "teachers" as Tab, label: "Teachers", icon: Users },
     { id: "memories" as Tab, label: "Memories", icon: ImageIcon },
     { id: "shared-gallery" as Tab, label: "Gallery", icon: ImageIcon },
     { id: "guestbook" as Tab, label: "Guestbook", icon: MessageSquare },
@@ -182,9 +191,10 @@ export default function AdminPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6"
           >
             <StatCard label="Students" value={stats.students.toString()} />
+            <StatCard label="Teachers" value={stats.teachers.toString()} />
             <StatCard label="Memories" value={stats.memories.toString()} />
             <StatCard label="Gallery" value={stats.sharedGallery.toString()} />
             <StatCard label="Guestbook" value={stats.guestbook.toString()} />
@@ -192,6 +202,7 @@ export default function AdminPage() {
         )}
 
         {activeTab === "students" && <AdminStudents />}
+        {activeTab === "teachers" && <AdminTeachers />}
         {activeTab === "memories" && <AdminMemories />}
         {activeTab === "shared-gallery" && <AdminSharedGallery />}
         {activeTab === "guestbook" && <AdminGuestbook />}

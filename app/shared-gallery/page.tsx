@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Menu, X, Heart, Share2, Download, Play } from "lucide-react";
 import { useData } from "@/hooks/useData";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
-import LightBox from "@/components/lightbox";
 import UploadMemory from "@/components/UploadMemory";
+
+const LightBox = dynamic(() => import("@/components/lightbox"), {
+  loading: () => null,
+  ssr: false,
+});
 
 interface GalleryItem {
   id: number;
@@ -18,8 +23,9 @@ interface GalleryItem {
   approved: boolean;
 }
 
-// ✅ Video Thumbnail Cache (prevents regenerating same thumbnails)
-const videoThumbnailCache = new Map<string, string>();
+// ✅ Video Thumbnail Cache with Deduplication
+const videoThumbnailCache = new Map<string, Promise<string | null>>();
+const generatingVideoThumbnails = new Map<string, Promise<string | null>>();
 
 // ✅ Video Component with Auto-Generated Thumbnail Cover
 function VideoWithCover({
@@ -40,60 +46,74 @@ function VideoWithCover({
   useEffect(() => {
     // Check cache first
     if (videoThumbnailCache.has(item.url)) {
-      setThumbnailUrl(videoThumbnailCache.get(item.url)!);
-      setIsGeneratingThumbnail(false);
+      videoThumbnailCache.get(item.url)?.then((thumbnail) => {
+        setThumbnailUrl(thumbnail);
+        setIsGeneratingThumbnail(false);
+      });
       return;
     }
 
-    const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
-    video.preload = "metadata";
-    video.muted = true;
-
-    const generateThumbnail = () => {
-      try {
-        // Seek to 1 second for a good frame
-        video.currentTime = 1;
-      } catch (error) {
-        console.error("Failed to seek video:", error);
-      }
-    };
-
-    const captureThumbnail = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(video, 0, 0);
-          const thumbnail = canvas.toDataURL("image/jpeg", 0.7);
-          videoThumbnailCache.set(item.url, thumbnail);
-          setThumbnailUrl(thumbnail);
-          setIsGeneratingThumbnail(false);
-        }
-      } catch (error) {
-        console.error("Failed to capture thumbnail:", error);
+    // Deduplicate thumbnail generation requests
+    if (generatingVideoThumbnails.has(item.url)) {
+      generatingVideoThumbnails.get(item.url)?.then((thumbnail) => {
+        setThumbnailUrl(thumbnail);
         setIsGeneratingThumbnail(false);
-        // Set a fallback gradient instead of broken image
-        setThumbnailUrl(null);
-      }
-    };
+      });
+      return;
+    }
 
-    video.addEventListener("loadeddata", generateThumbnail);
-    video.addEventListener("seeked", captureThumbnail);
-    video.addEventListener("error", () => {
-      console.error("Failed to load video for thumbnail:", item.url);
-      setIsGeneratingThumbnail(false);
-      video.remove();
+    const generationPromise = new Promise<string | null>((resolve) => {
+      const video = document.createElement("video");
+      video.crossOrigin = "anonymous";
+      video.preload = "metadata";
+      video.muted = true;
+
+      const generateThumbnail = () => {
+        try {
+          video.currentTime = 1;
+        } catch (error) {
+          console.error("Failed to seek video:", error);
+        }
+      };
+
+      const captureThumbnail = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(video, 0, 0);
+            const thumbnail = canvas.toDataURL("image/jpeg", 0.6);
+            videoThumbnailCache.set(item.url, Promise.resolve(thumbnail));
+            setThumbnailUrl(thumbnail);
+            setIsGeneratingThumbnail(false);
+            resolve(thumbnail);
+          }
+        } catch (error) {
+          console.error("Failed to capture thumbnail:", error);
+          setIsGeneratingThumbnail(false);
+          resolve(null);
+        }
+        video.remove();
+        generatingVideoThumbnails.delete(item.url);
+      };
+
+      video.addEventListener("loadeddata", generateThumbnail);
+      video.addEventListener("seeked", captureThumbnail);
+      video.addEventListener("error", () => {
+        console.error("Failed to load video for thumbnail:", item.url);
+        setIsGeneratingThumbnail(false);
+        resolve(null);
+        video.remove();
+        generatingVideoThumbnails.delete(item.url);
+      });
+
+      video.src = item.url;
+      video.load();
     });
 
-    video.src = item.url;
-    video.load();
-
-    return () => {
-      video.remove();
-    };
+    generatingVideoThumbnails.set(item.url, generationPromise);
   }, [item.url]);
 
   // Intersection Observer for lazy loading
@@ -300,7 +320,7 @@ export default function SharedGalleryPage() {
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
 
-  const { data: gallery, mutate } = useData<GalleryItem[]>("gallery.json");
+  const { data: gallery } = useData<GalleryItem[]>("gallery.json");
 
   // ✅ ONLY APPROVED ITEMS - Memoized to prevent recalculation
   const approvedGallery = useMemo(
@@ -364,8 +384,8 @@ export default function SharedGalleryPage() {
 
   const handleUploadComplete = useCallback(() => {
     setIsUploading(false);
-    mutate();
-  }, [mutate]);
+    // Gallery will auto-update via useData hook
+  }, []);
 
   // Memoized gallery item component
   const GalleryItemComponent = useCallback(
@@ -503,10 +523,7 @@ export default function SharedGalleryPage() {
               <p className="text-netflix-lightgray mb-6">
                 Share a new photo or video from the graduation celebration.
               </p>
-              <UploadMemory
-                onUploaded={handleUploadComplete}
-                onUploadStart={() => setIsUploading(true)}
-              />
+              <UploadMemory onUploaded={handleUploadComplete} />
               {isUploading && (
                 <div className="mt-4 flex items-center gap-3 text-netflix-lightgray">
                   <div className="w-5 h-5 border-2 border-netflix-red border-t-transparent rounded-full animate-spin" />

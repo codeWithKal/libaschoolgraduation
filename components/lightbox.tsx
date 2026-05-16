@@ -87,7 +87,7 @@ function useBodyScrollLock(isLocked: boolean) {
 
 // Utility function to format time
 function formatTime(seconds: number): string {
-  if (isNaN(seconds)) return "0:00";
+  if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
 
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -99,21 +99,40 @@ function formatTime(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
 
-// Video Player Component
+// Optimized Video Player Component
 const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const animationRef = useRef<number>();
 
+  // Use refs for values that don't need to trigger re-renders
+  const isDraggingRef = useRef(false);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  // Only state that affects UI rendering
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [buffered, setBuffered] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [bufferedEnd, setBufferedEnd] = useState(0);
+
+  // Update progress without causing excessive re-renders
+  const updateProgress = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || isDraggingRef.current) return;
+
+    const newProgress = (video.currentTime / video.duration) * 100;
+    setCurrentTime(video.currentTime);
+
+    // Only update state if progress changed significantly (every ~100ms)
+    setProgress((prev) =>
+      Math.abs(prev - newProgress) > 0.1 ? newProgress : prev,
+    );
+  }, []);
 
   const resetControlsTimer = useCallback(() => {
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
@@ -137,18 +156,29 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     if (video.paused) {
       video.play();
       setIsPlaying(true);
+      setShowControls(true);
+      resetControlsTimer();
+      // Start animation frame for smooth progress updates
+      const update = () => {
+        updateProgress();
+        animationRef.current = requestAnimationFrame(update);
+      };
+      animationRef.current = requestAnimationFrame(update);
     } else {
       video.pause();
       setIsPlaying(false);
       setShowControls(true);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     }
-  }, []);
+  }, [updateProgress, resetControlsTimer]);
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     video.muted = !video.muted;
-    setIsMuted(!video.muted);
+    setIsMuted(video.muted);
   }, []);
 
   const toggleFullscreen = useCallback(() => {
@@ -164,22 +194,18 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     }
   }, []);
 
-  const handleTimeUpdate = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || isDragging) return;
-    setCurrentTime(video.currentTime);
-  }, [isDragging]);
-
   const handleLoadedMetadata = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     setDuration(video.duration);
+    setCurrentTime(0);
+    setProgress(0);
   }, []);
 
   const handleProgress = useCallback(() => {
     const video = videoRef.current;
     if (!video || video.buffered.length === 0) return;
-    setBuffered(video.buffered.end(video.buffered.length - 1));
+    setBufferedEnd(video.buffered.end(video.buffered.length - 1));
   }, []);
 
   const handleSeek = useCallback(
@@ -194,13 +220,15 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
       video.currentTime = percentage * duration;
+      setCurrentTime(video.currentTime);
+      setProgress(percentage * 100);
     },
     [duration],
   );
 
   const handleDragStart = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      setIsDragging(true);
+      isDraggingRef.current = true;
       handleSeek(e);
     },
     [handleSeek],
@@ -208,21 +236,23 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
 
   const handleDragMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging || !progressBarRef.current || duration === 0) return;
+      if (!isDraggingRef.current || !progressBarRef.current || duration === 0)
+        return;
       const rect = progressBarRef.current.getBoundingClientRect();
       const percentage = Math.max(
         0,
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
+      setProgress(percentage * 100);
       setCurrentTime(percentage * duration);
     },
-    [isDragging, duration],
+    [duration],
   );
 
   const handleDragEnd = useCallback(
     (e: MouseEvent) => {
       if (
-        !isDragging ||
+        !isDraggingRef.current ||
         !videoRef.current ||
         !progressBarRef.current ||
         duration === 0
@@ -234,22 +264,28 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
         Math.min(1, (e.clientX - rect.left) / rect.width),
       );
       videoRef.current.currentTime = percentage * duration;
-      setIsDragging(false);
+      isDraggingRef.current = false;
     },
-    [isDragging, duration],
+    [duration],
   );
 
+  // Set up drag event listeners
   useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("mousemove", handleDragMove);
-      document.addEventListener("mouseup", handleDragEnd);
-    }
-    return () => {
-      document.removeEventListener("mousemove", handleDragMove);
-      document.removeEventListener("mouseup", handleDragEnd);
-    };
-  }, [isDragging, handleDragMove, handleDragEnd]);
+    const handleMouseMove = (e: MouseEvent) => handleDragMove(e);
+    const handleMouseUp = (e: MouseEvent) => handleDragEnd(e);
 
+    if (isDraggingRef.current) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [handleDragMove, handleDragEnd]);
+
+  // Handle fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () =>
       setIsFullscreen(!!document.fullscreenElement);
@@ -258,6 +294,7 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -271,10 +308,12 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
         case "ArrowLeft":
           e.preventDefault();
           video.currentTime = Math.max(0, video.currentTime - 5);
+          setCurrentTime(video.currentTime);
           break;
         case "ArrowRight":
           e.preventDefault();
           video.currentTime = Math.min(video.duration, video.currentTime + 5);
+          setCurrentTime(video.currentTime);
           break;
         case "ArrowUp":
           e.preventDefault();
@@ -297,8 +336,25 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [togglePlay, toggleMute, toggleFullscreen]);
 
-  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const bufferedPercentage = duration > 0 ? (buffered / duration) * 100 : 0;
+  // Clean up animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Show controls initially
+  useEffect(() => {
+    setShowControls(true);
+    resetControlsTimer();
+  }, [resetControlsTimer]);
+
+  const bufferedPercentage = duration > 0 ? (bufferedEnd / duration) * 100 : 0;
 
   if (error) {
     return (
@@ -316,16 +372,19 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
     <div
       className="relative group w-full h-full bg-black rounded-xl overflow-hidden"
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => isPlaying && setShowControls(false)}
+      onMouseLeave={() => {
+        if (isPlaying) {
+          setShowControls(false);
+        }
+      }}
     >
       <video
         ref={videoRef}
         src={url}
-        className="w-full h-full object-contain cursor-pointer"
+        className="w-full h-full object-contain"
         onClick={togglePlay}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onProgress={handleProgress}
         onError={() => setError(true)}
@@ -344,12 +403,13 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
         </div>
       )}
 
+      {/* Video Controls - Always visible when showControls is true */}
       <div
         className={`
           absolute bottom-0 left-0 right-0
           bg-gradient-to-t from-black/90 via-black/50 to-transparent
           transition-opacity duration-300
-          ${showControls || !isPlaying ? "opacity-100" : "opacity-0"}
+          ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}
         `}
       >
         <div className="px-4 pt-2 pb-1">
@@ -364,14 +424,14 @@ const VideoPlayer = memo(function VideoPlayer({ url }: { url: string }) {
               style={{ width: `${bufferedPercentage}%` }}
             />
             <div
-              className="absolute top-0 left-0 h-full bg-netflix-red rounded-full"
-              style={{ width: `${progressPercentage}%` }}
+              className="absolute top-0 left-0 h-full bg-red-500 rounded-full"
+              style={{ width: `${progress}%` }}
             />
             <div
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-netflix-red rounded-full opacity-0 group-hover/progress:opacity-100 transition-all duration-150 shadow-lg"
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full opacity-0 group-hover/progress:opacity-100 transition-all duration-150 shadow-lg"
               style={{
-                left: `calc(${progressPercentage}% - 6px)`,
-                display: progressPercentage === 0 ? "none" : "block",
+                left: `calc(${progress}% - 6px)`,
+                display: progress === 0 ? "none" : "block",
               }}
             />
           </div>
@@ -452,7 +512,7 @@ const NavigationArrow = memo(function NavigationArrow({
   );
 });
 
-// Main LightBox Component - Modal Size
+// Main LightBox Component
 function LightBox({
   media,
   onClose,
@@ -467,9 +527,14 @@ function LightBox({
   const isImage = media.type === "image" || media.type === "photo";
   const isVideo = media.type === "video";
 
+  // Prevent background click when interacting with media
+  const handleModalClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label={`${isVideo ? "Video" : "Image"} viewer: ${media.caption}`}
@@ -477,8 +542,8 @@ function LightBox({
     >
       {/* Modal Container */}
       <div
-        className="relative w-full max-w-5xl max-h-[90vh] bg-black/95 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-5xl max-h-[90vh] bg-black/95 rounded-2xl shadow-2xl overflow-hidden"
+        onClick={handleModalClick}
       >
         {/* Close Button */}
         <button
@@ -558,7 +623,7 @@ function LightBox({
 
           {/* Caption Footer */}
           {media.caption && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 rounded-b-2xl">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 rounded-b-2xl pointer-events-none">
               <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-[10px] font-semibold text-white/80 uppercase tracking-wider">

@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Navigation from "@/components/navigation";
-import MediaGallery from "@/components/media-gallery";
-import LightBox from "@/components/lightbox";
 import UploadMemory from "@/components/UploadMemory";
 import Footer from "@/components/footer";
 import { useData } from "@/hooks/useData";
@@ -19,6 +18,12 @@ import {
   Filter,
 } from "lucide-react";
 
+// Lazy load heavy component
+const LightBox = dynamic(() => import("@/components/lightbox"), {
+  loading: () => null,
+  ssr: false,
+});
+
 interface GalleryItem {
   id: number;
   type: string;
@@ -29,8 +34,47 @@ interface GalleryItem {
   thumbnail?: string;
 }
 
-// ✅ Cached Video Thumbnail Component
-const thumbnailCache = new Map<string, string>();
+// ✅ Lazy Image Component
+function LazyImage({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black animate-pulse" />
+      )}
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        className={`${className} object-cover transition-opacity duration-300 ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        } group-hover:scale-110 transition-transform duration-500`}
+      />
+    </div>
+  );
+}
+
+// ✅ Enhanced Cached Video Thumbnail Component with deduplication
+const thumbnailCache = new Map<string, Promise<string | null>>();
+const generatingThumbnails = new Map<string, Promise<string | null>>();
 
 function VideoThumbnail({
   item,
@@ -39,74 +83,136 @@ function VideoThumbnail({
   item: GalleryItem;
   size?: "large" | "small";
 }) {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
-    item.thumbnail || thumbnailCache.get(item.url) || null,
-  );
-  const [isLoading, setIsLoading] = useState(
-    !item.thumbnail && !thumbnailCache.has(item.url),
-  );
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const thumbnailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Check cache first
     if (thumbnailCache.has(item.url)) {
-      setThumbnailUrl(thumbnailCache.get(item.url)!);
+      thumbnailCache.get(item.url)?.then((url) => {
+        setThumbnailUrl(url);
+        setIsLoading(false);
+      });
+      return;
+    }
+
+    // Use provided thumbnail if available
+    if (item.thumbnail) {
+      setThumbnailUrl(item.thumbnail);
+      thumbnailCache.set(item.url, Promise.resolve(item.thumbnail));
       setIsLoading(false);
       return;
     }
 
-    if (item.thumbnail) {
-      thumbnailCache.set(item.url, item.thumbnail);
+    // Wait for visibility before generating
+    if (!isVisible) {
       return;
     }
 
-    // Generate thumbnail only once per video URL
-    const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
-    video.preload = "metadata";
-    video.muted = true;
+    // Deduplicate thumbnail generation requests
+    if (generatingThumbnails.has(item.url)) {
+      generatingThumbnails.get(item.url)?.then((url) => {
+        setThumbnailUrl(url);
+        setIsLoading(false);
+      });
+      return;
+    }
 
-    let isMounted = true;
+    // Generate new thumbnail
+    const generationPromise = new Promise<string | null>((resolve) => {
+      const video = document.createElement("video");
+      video.crossOrigin = "anonymous";
+      video.preload = "metadata";
+      video.muted = true;
 
-    const generateThumbnail = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        if (ctx && isMounted) {
-          ctx.drawImage(video, 0, 0);
-          const thumbnail = canvas.toDataURL("image/jpeg", 0.7);
-          thumbnailCache.set(item.url, thumbnail);
-          setThumbnailUrl(thumbnail);
-          setIsLoading(false);
+      let isMounted = true;
+
+      const cleanup = () => {
+        video.remove();
+        generatingThumbnails.delete(item.url);
+      };
+
+      const captureThumbnail = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext("2d");
+          if (ctx && isMounted) {
+            ctx.drawImage(video, 0, 0);
+            const thumbnail = canvas.toDataURL("image/jpeg", 0.6);
+            setThumbnailUrl(thumbnail);
+            setIsLoading(false);
+            resolve(thumbnail);
+          } else {
+            resolve(null);
+          }
+        } catch (error) {
+          console.error("Failed to generate thumbnail:", error);
+          if (isMounted) {
+            setIsLoading(false);
+            resolve(null);
+          }
         }
-      } catch (error) {
-        console.error("Failed to generate thumbnail:", error);
-        if (isMounted) setIsLoading(false);
-      }
-    };
+        cleanup();
+      };
 
-    video.addEventListener("loadeddata", () => {
-      video.currentTime = 1;
+      const onLoadedData = () => {
+        try {
+          video.currentTime = 1;
+        } catch (error) {
+          console.error("Failed to seek video:", error);
+          cleanup();
+        }
+      };
+
+      video.addEventListener("loadeddata", onLoadedData);
+      video.addEventListener("seeked", captureThumbnail);
+      video.addEventListener("error", () => {
+        if (isMounted) {
+          setIsLoading(false);
+          resolve(null);
+        }
+        cleanup();
+      });
+
+      video.src = item.url;
+      video.load();
     });
 
-    video.addEventListener("seeked", generateThumbnail);
-    video.addEventListener("error", () => {
-      if (isMounted) setIsLoading(false);
-      video.remove();
-    });
+    generatingThumbnails.set(item.url, generationPromise);
+  }, [item.url, item.thumbnail, isVisible]);
 
-    video.src = item.url;
-    video.load();
+  // Intersection Observer for lazy generation
+  useEffect(() => {
+    if (thumbnailCache.has(item.url) || item.thumbnail) {
+      setIsLoading(false);
+      return;
+    }
 
-    return () => {
-      isMounted = false;
-      video.remove();
-    };
+    if (!thumbnailRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px", threshold: 0.1 },
+    );
+
+    observer.observe(thumbnailRef.current);
+    return () => observer.disconnect();
   }, [item.url, item.thumbnail]);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden">
+    <div
+      ref={thumbnailRef}
+      className="relative w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden"
+    >
       {thumbnailUrl ? (
         <img
           src={thumbnailUrl}
@@ -125,11 +231,11 @@ function VideoThumbnail({
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div
           className={`
-          rounded-full bg-netflix-red/90 backdrop-blur-sm flex items-center justify-center 
-          border-2 border-white/30 group-hover:scale-110 group-hover:bg-netflix-red 
-          transition-all duration-300 shadow-lg
-          ${size === "large" ? "w-16 h-16" : "w-10 h-10"}
-        `}
+            rounded-full bg-netflix-red/90 backdrop-blur-sm flex items-center justify-center 
+            border-2 border-white/30 group-hover:scale-110 group-hover:bg-netflix-red 
+            transition-all duration-300 shadow-lg
+            ${size === "large" ? "w-16 h-16" : "w-10 h-10"}
+          `}
         >
           <PlayCircle
             className="text-white"
@@ -137,60 +243,6 @@ function VideoThumbnail({
           />
         </div>
       </div>
-    </div>
-  );
-}
-
-// ✅ Lazy Image Component with Intersection Observer
-function LazyImage({
-  src,
-  alt,
-  className,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-}) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observer.disconnect();
-          }
-        });
-      },
-      { rootMargin: "200px" }, // Load 200px before visible
-    );
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={imgRef} className={`relative overflow-hidden ${className || ""}`}>
-      {!isLoaded && isInView && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 animate-pulse" />
-      )}
-      {isInView && (
-        <img
-          src={src}
-          alt={alt}
-          loading="lazy"
-          onLoad={() => setIsLoaded(true)}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            isLoaded ? "opacity-100" : "opacity-0"
-          } group-hover:scale-110 transition-transform duration-500`}
-        />
-      )}
     </div>
   );
 }
@@ -237,11 +289,17 @@ function useInfiniteScroll(loadMore: () => void, hasMore: boolean) {
       { threshold: 0.1, rootMargin: "500px" },
     );
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
+    const currentLoader = loaderRef.current;
+    if (currentLoader) {
+      observer.observe(currentLoader);
     }
 
-    return () => observer.disconnect();
+    return () => {
+      if (currentLoader) {
+        observer.unobserve(currentLoader);
+      }
+      observer.disconnect();
+    };
   }, [loadMore, hasMore]);
 
   return loaderRef;
@@ -303,118 +361,117 @@ export default function MemoriesPage() {
     { key: "videos", label: "Videos", icon: PlayCircle },
   ] as const;
 
-  // Render item based on type
-  const renderItem = (
-    item: GalleryItem,
-    index: number,
-    isTileMode: boolean = false,
-  ) => {
-    const isVideo = item.type === "video";
-    const size = isTileMode ? "small" : "large";
+  // Render item based on type and view mode
+  const renderItem = useCallback(
+    (item: GalleryItem, index: number) => {
+      const isVideo = item.type === "video";
 
-    return (
-      <div
-        key={`${item.id}-${index}`}
-        onClick={() => setSelectedMedia(item)}
-        className="group cursor-pointer animate-slide-in-up"
-        style={{ animationDelay: `${(index % 8) * 0.05}s` }}
-      >
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500 aspect-[4/3]">
-          <div className="relative overflow-hidden rounded-2xl h-full">
-            {isVideo ? (
-              <VideoThumbnail item={item} size={size} />
-            ) : (
-              <LazyImage
-                src={item.url}
-                alt={item.caption}
-                className="w-full h-full"
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
+      if (viewMode === "tiles") {
+        return (
+          <div
+            key={`${item.id}-${index}`}
+            onClick={() => setSelectedMedia(item)}
+            className="group cursor-pointer animate-slide-in-up"
+            style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+          >
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500">
+              <div className="relative overflow-hidden rounded-xl aspect-square bg-gradient-to-br from-gray-800 to-gray-900">
+                {isVideo ? (
+                  <VideoThumbnail item={item} size="small" />
+                ) : (
+                  <LazyImage
+                    src={item.url}
+                    alt={item.caption}
+                    className="w-full h-full"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
+              </div>
+            </div>
+            <div className="mt-3 text-center">
+              <p className="text-sm font-semibold text-white truncate">
+                {item.caption}
+              </p>
+              <p className="text-xs text-netflix-lightgray uppercase">
+                {item.type}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      if (viewMode === "list") {
+        return (
+          <div
+            key={`${item.id}-${index}`}
+            onClick={() => setSelectedMedia(item)}
+            className="group cursor-pointer flex items-center gap-5 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-netflix-red/30 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-500 animate-slide-in-up"
+            style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+          >
+            <div className="relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800 to-gray-900">
+              {isVideo ? (
+                <VideoThumbnail item={item} size="small" />
+              ) : (
+                <LazyImage
+                  src={item.url}
+                  alt={item.caption}
+                  className="w-full h-full"
+                />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-white font-bold text-xl mb-2 group-hover:text-netflix-red transition">
+                {item.caption}
+              </h3>
+              <p className="text-yellow-300 text-sm font-medium mb-2">
+                {selectedDay}
+              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-xs uppercase text-netflix-lightgray">
+                {isVideo ? <PlayCircle size={12} /> : <Images size={12} />}
+                {item.type}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Default grid view
+      return (
+        <div
+          key={`${item.id}-${index}`}
+          onClick={() => setSelectedMedia(item)}
+          className="group cursor-pointer animate-slide-in-up"
+          style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+        >
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500 aspect-[4/3]">
+            <div className="relative overflow-hidden rounded-2xl h-full">
+              {isVideo ? (
+                <VideoThumbnail item={item} size="large" />
+              ) : (
+                <LazyImage
+                  src={item.url}
+                  alt={item.caption}
+                  className="w-full h-full"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-white font-bold text-lg mb-1 group-hover:text-netflix-red transition truncate">
+              {item.caption}
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-yellow-300">{selectedDay}</span>
+              <span className="text-xs text-netflix-lightgray uppercase">
+                • {item.type}
+              </span>
+            </div>
           </div>
         </div>
-        <div className="mt-3">
-          <h3 className="text-white font-bold text-lg mb-1 group-hover:text-netflix-red transition truncate">
-            {item.caption}
-          </h3>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-yellow-300">{selectedDay}</span>
-            <span className="text-xs text-netflix-lightgray uppercase">
-              • {item.type}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Tile mode renderer
-  const renderTile = (item: GalleryItem, index: number) => (
-    <div
-      key={`${item.id}-${index}`}
-      onClick={() => setSelectedMedia(item)}
-      className="group cursor-pointer animate-slide-in-up"
-      style={{ animationDelay: `${(index % 8) * 0.05}s` }}
-    >
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500">
-        <div className="relative overflow-hidden rounded-xl aspect-square bg-gradient-to-br from-gray-800 to-gray-900">
-          {item.type === "video" ? (
-            <VideoThumbnail item={item} size="small" />
-          ) : (
-            <LazyImage
-              src={item.url}
-              alt={item.caption}
-              className="w-full h-full"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
-        </div>
-      </div>
-      <div className="mt-3 text-center">
-        <p className="text-sm font-semibold text-white truncate">
-          {item.caption}
-        </p>
-        <p className="text-xs text-netflix-lightgray uppercase">{item.type}</p>
-      </div>
-    </div>
-  );
-
-  // List mode renderer
-  const renderListItem = (item: GalleryItem, index: number) => (
-    <div
-      key={`${item.id}-${index}`}
-      onClick={() => setSelectedMedia(item)}
-      className="group cursor-pointer flex items-center gap-5 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-netflix-red/30 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-500 animate-slide-in-up"
-      style={{ animationDelay: `${(index % 8) * 0.05}s` }}
-    >
-      <div className="relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800 to-gray-900">
-        {item.type === "video" ? (
-          <VideoThumbnail item={item} size="small" />
-        ) : (
-          <LazyImage
-            src={item.url}
-            alt={item.caption}
-            className="w-full h-full"
-          />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="text-white font-bold text-xl mb-2 group-hover:text-netflix-red transition">
-          {item.caption}
-        </h3>
-        <p className="text-yellow-300 text-sm font-medium mb-2">
-          {selectedDay}
-        </p>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-xs uppercase text-netflix-lightgray">
-          {item.type === "video" ? (
-            <PlayCircle size={12} />
-          ) : (
-            <Images size={12} />
-          )}
-          {item.type}
-        </div>
-      </div>
-    </div>
+      );
+    },
+    [viewMode, selectedDay],
   );
 
   return (
@@ -442,7 +499,7 @@ export default function MemoriesPage() {
 
       <div className="relative pt-24 px-4 md:px-8 pb-16">
         <div className="max-w-7xl mx-auto">
-          {/* HEADER - Unchanged */}
+          {/* HEADER */}
           <div className="relative mb-14">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-sm font-medium mb-6">
               <Sparkles size={16} />
@@ -477,7 +534,7 @@ export default function MemoriesPage() {
             </div>
           </div>
 
-          {/* FILTER PANEL - Unchanged */}
+          {/* FILTER PANEL */}
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-2xl p-6 md:p-8 mb-10">
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-transparent to-netflix-red/5" />
             <div className="relative">
@@ -554,23 +611,19 @@ export default function MemoriesPage() {
             <>
               {viewMode === "grid" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {visibleItems.map((item, index) =>
-                    renderItem(item, index, false),
-                  )}
+                  {visibleItems.map((item, index) => renderItem(item, index))}
                 </div>
               )}
 
               {viewMode === "tiles" && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-5">
-                  {visibleItems.map((item, index) => renderTile(item, index))}
+                  {visibleItems.map((item, index) => renderItem(item, index))}
                 </div>
               )}
 
               {viewMode === "list" && (
                 <div className="space-y-5">
-                  {visibleItems.map((item, index) =>
-                    renderListItem(item, index),
-                  )}
+                  {visibleItems.map((item, index) => renderItem(item, index))}
                 </div>
               )}
 

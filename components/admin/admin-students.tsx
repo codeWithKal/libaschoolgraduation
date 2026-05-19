@@ -52,7 +52,7 @@ export default function AdminStudents() {
   async function fetchStudents() {
     try {
       setLoading(true);
-      const response = await fetch("/data/students.json");
+      const response = await fetch("/api/data/students.json");
       if (!response.ok) throw new Error("Failed to fetch students");
       const data = await response.json();
       setStudents(Array.isArray(data) ? data : []);
@@ -240,7 +240,6 @@ export default function AdminStudents() {
           stream: formData.stream,
           photo: photoPath || "",
           bio: formData.bio,
-          last_word: formData.last_word,
           last_word: formData.last_word,
           messages: [],
         };

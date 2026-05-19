@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DIR="./public/images/welcome_day"
-OUTPUT="./public/data/welcome_day.json"
+OUTPUT="./data/welcome_day.json"
 
 mkdir -p "$(dirname "$OUTPUT")"
 

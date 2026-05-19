@@ -50,7 +50,7 @@ export default function AdminTeachers() {
   async function fetchTeachers() {
     try {
       setLoading(true);
-      const response = await fetch("/data/teachers.json");
+      const response = await fetch("/api/data/teachers.json");
       if (!response.ok) throw new Error("Failed to fetch teachers");
       const data = await response.json();
       setTeachers(Array.isArray(data) ? data : []);

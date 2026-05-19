@@ -6,12 +6,7 @@ import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
-const galleryFilePath = path.join(
-  process.cwd(),
-  "public",
-  "data",
-  "gallery.json",
-);
+const galleryFilePath = path.join(process.cwd(), "data", "gallery.json");
 
 const uploadDir = path.join(process.cwd(), "public", "images", "gallery");
 const tempDir = path.join(process.cwd(), "temp");

@@ -40,7 +40,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchStudentPhotos() {
       try {
-        const response = await fetch("/data/students.json");
+        const response = await fetch("/api/data/students.json");
         const students: Student[] = await response.json();
 
         // Filter students with valid photos (not base64 or external URLs)
@@ -84,8 +84,8 @@ export default function Home() {
       try {
         // Fetch both Gabi Day and Welcome Day memories
         const [gabiResponse, welcomeResponse] = await Promise.all([
-          fetch("/data/gabi_day.json"),
-          fetch("/data/welcome_day.json"),
+          fetch("/api/data/gabi_day.json"),
+          fetch("/api/data/welcome_day.json"),
         ]);
 
         const gabiMemories: Memory[] = await gabiResponse.json();

@@ -342,29 +342,6 @@ export default function UploadMemory({
                     className="w-full p-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder:text-gray-500 focus:border-yellow-500 focus:outline-none transition-colors"
                   />
 
-                  <div className="flex items-start gap-2 text-xs text-yellow-400 bg-yellow-400/10 p-3 rounded-xl">
-                    <span className="text-base">🚀</span>
-                    <div>
-                      <p className="font-medium mb-1">
-                        Server-Side Optimization:
-                      </p>
-                      <ul className="list-disc list-inside space-y-1 text-yellow-300">
-                        <li>
-                          Images: Compressed to 1080px max, optimized quality
-                        </li>
-                        <li>
-                          Videos: Compressed to 480p with FFmpeg (highly
-                          efficient)
-                        </li>
-                        <li>
-                          Large videos (&gt;50MB): Converted to GIF for maximum
-                          compression
-                        </li>
-                        <li>All files are optimized for web delivery</li>
-                      </ul>
-                    </div>
-                  </div>
-
                   <button
                     onClick={handleUpload}
                     disabled={loading || !file}

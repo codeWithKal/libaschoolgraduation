@@ -72,13 +72,13 @@ export default function AdminPage() {
         sharedGalleryRes,
         guestbookRes,
       ] = await Promise.all([
-        fetch("/data/students.json"),
-        fetch("/data/teachers.json"),
-        fetch("/data/gabi_day.json"),
-        fetch("/data/welcome_day.json"),
-        fetch("/data/crazy_day.json"),
-        fetch("/data/gallery.json"),
-        fetch("/data/guestbook.json"),
+        fetch("/api/data/students.json"),
+        fetch("/api/data/teachers.json"),
+        fetch("/api/data/gabi_day.json"),
+        fetch("/api/data/welcome_day.json"),
+        fetch("/api/data/crazy_day.json"),
+        fetch("/api/data/gallery.json"),
+        fetch("/api/data/guestbook.json"),
       ]);
 
       const studentsData = await studentsRes.json();

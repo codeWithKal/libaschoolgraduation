@@ -41,9 +41,9 @@ interface Memory {
 const DAYS = ["Gabi Day", "Crazy Day", "Welcome Day"];
 
 const DAY_FILE_MAP: Record<string, string> = {
-  "Gabi Day": "/data/gabi_day.json",
-  "Crazy Day": "/data/crazy_day.json",
-  "Welcome Day": "/data/welcome_day.json",
+  "Gabi Day": "/api/data/gabi_day.json",
+  "Crazy Day": "/api/data/crazy_day.json",
+  "Welcome Day": "/api/data/welcome_day.json",
 };
 
 export default function AdminMemories() {

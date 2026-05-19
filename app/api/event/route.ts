@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const eventFilePath = path.join(process.cwd(), "public", "data", "event.json");
+const eventFilePath = path.join(process.cwd(), "data", "event.json");
 
 export async function GET() {
   try {

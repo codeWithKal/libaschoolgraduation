@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const filePath = path.join(process.cwd(), "public", "data", "guestbook.json");
+const filePath = path.join(process.cwd(), "data", "guestbook.json");
 
 // 🔹 Ensure file exists
 function ensureFile() {

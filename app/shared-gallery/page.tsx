@@ -42,8 +42,21 @@ function VideoWithCover({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(false);
 
+  const isSameOriginVideo = useMemo(() => {
+    try {
+      const videoUrl = new URL(item.url, window.location.href);
+      return videoUrl.origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }, [item.url]);
+
   // Generate thumbnail from video (runs once per video URL)
   useEffect(() => {
+    if (!isSameOriginVideo) {
+      setIsGeneratingThumbnail(false);
+      return;
+    }
     // Check cache first
     if (videoThumbnailCache.has(item.url)) {
       videoThumbnailCache.get(item.url)?.then((thumbnail) => {
@@ -102,7 +115,10 @@ function VideoWithCover({
       video.addEventListener("loadeddata", generateThumbnail);
       video.addEventListener("seeked", captureThumbnail);
       video.addEventListener("error", () => {
-        console.error("Failed to load video for thumbnail:", item.url);
+        console.debug(
+          "Failed to load video for thumbnail (skipping):",
+          item.url,
+        );
         setIsGeneratingThumbnail(false);
         resolve(null);
         video.remove();

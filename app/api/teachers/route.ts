@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFile, writeFile } from "fs/promises";
 import path from "path";
 
-const DATA_FILE = path.join(process.cwd(), "public", "data", "teachers.json");
+const DATA_FILE = path.join(process.cwd(), "data", "teachers.json");
 
 export async function GET() {
   try {

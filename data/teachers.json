@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "name": "Mr. Amos",
+    "subject": "Biology",
+    "photo_url": "images/teachers/teacher1.jpeg",
+    "bio": "Dedicated biology educator with 15+ years of teaching experience",
+    "quote": "Education is the most powerful tool in the world"
+  },
+  {
+    "id": 2,
+    "name": "Mrs. Sarah",
+    "subject": "English",
+    "photo_url": "images/teachers/teacher2.jpg",
+    "bio": "Passionate about literature and developing students' communication skills",
+    "quote": "Reading opens doors to infinite worlds"
+  },
+  {
+    "id": 3,
+    "name": "Mr. James",
+    "subject": "Mathematics",
+    "photo_url": "images/teachers/teacher3.jpg",
+    "bio": "Experienced math teacher who makes complex concepts simple and interesting",
+    "quote": "Math is the language of the universe"
+  },
+  {
+    "id": 4,
+    "name": "Mrs. Grace",
+    "subject": "Physics",
+    "photo_url": "images/teachers/teacher4.jpg",
+    "bio": "Innovative educator dedicated to hands-on learning experiences",
+    "quote": "Physics is the magic of reality"
+  },
+  {
+    "id": 5,
+    "name": "Mr. David",
+    "subject": "Chemistry",
+    "photo_url": "images/teachers/teacher5.jpg",
+    "bio": "Passionate about making chemistry engaging and accessible to all",
+    "quote": "Chemistry is everywhere - in life itself"
+  },
+  {
+    "id": 6,
+    "name": "Mrs. Emily",
+    "subject": "History",
+    "photo_url": "images/teachers/teacher6.jpg",
+    "bio": "Inspiring teacher who brings history to life through engaging storytelling",
+    "quote": "Those who cannot learn from history are doomed to repeat it"
+  },
+  {
+    "id": 7,
+    "name": "Mr. Kwame",
+    "subject": "Physical Education",
+    "photo_url": "images/teachers/teacher7.jpg",
+    "bio": "Passionate coach committed to building healthy and confident students",
+    "quote": "A healthy body is a healthy mind"
+  },
+  {
+    "id": 8,
+    "name": "Mrs. Abigail",
+    "subject": "Art & Design",
+    "photo_url": "images/teachers/teacher8.jpg",
+    "bio": "Creative educator fostering artistic expression and innovation",
+    "quote": "Art is the soul of creativity"
+  },
+  {
+    "id": 9,
+    "name": "Mr. Isaac",
+    "subject": "ICT",
+    "photo_url": "images/teachers/teacher10.jpg",
+    "bio": "Tech-savvy educator preparing students for the digital future",
+    "quote": "Technology is best when it brings people together"
+  }
+]

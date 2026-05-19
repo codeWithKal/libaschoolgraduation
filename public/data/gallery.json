@@ -86,5 +86,19 @@
     "caption": "Cyber",
     "studentId": 1,
     "approved": true
+  },
+  {
+    "id": 1779109005271,
+    "type": "video",
+    "url": "/images/gallery/1779108955072-compressed.mp4",
+    "caption": "ahmed manjus edited song",
+    "studentId": 1,
+    "approved": true,
+    "compressionInfo": {
+      "originalSize": "16.96MB",
+      "compressedSize": "6.27MB",
+      "savings": "63.1%",
+      "method": "video compression (FFmpeg)"
+    }
   }
 ]

@@ -18,9 +18,7 @@ interface Student {
   stream: "Natural" | "Social";
   photo?: string;
   bio?: string;
-  last_word?: string;
   messages?: string[];
-  stream?: string;
   photo_url?: string;
   last_word?: string;
 }
@@ -228,7 +226,6 @@ export default function AdminStudents() {
                 name: formData.name,
                 stream: formData.stream,
                 bio: formData.bio,
-                last_word: formData.last_word,
                 photo: photoPath || formData.photo,
                 last_word: formData.last_word, // Keep both fields in sync
               }

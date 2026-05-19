@@ -39,10 +39,10 @@ const _lavishly = Lavishly_Yours({
   variable: "--font-lavishly",
 });
 export const metadata: Metadata = {
-  title: "Graduation Celebration - Class of 2024",
+  title: "NOVAREING - Graduation Celebration ",
   description:
     "Experience an unforgettable graduation celebration. Browse graduating student profiles, share memories, and celebrate this momentous milestone together.",
-  generator: "v0.app",
+  metadataBase: new URL("https://example.com"),
   themeColor: "#0a0a0a",
   viewport: {
     width: "device-width",
@@ -52,11 +52,15 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
+        url: "/logo.jpg",
+        type: "image/jpeg",
+      },
+      {
+        url: "/logo.jpg",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/icon-dark-32x32.png",
+        url: "/logo.jpg",
         media: "(prefers-color-scheme: dark)",
       },
       {
@@ -64,7 +68,7 @@ export const metadata: Metadata = {
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+    apple: "/logo.jpg",
   },
 };
 

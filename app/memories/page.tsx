@@ -34,7 +34,7 @@ interface GalleryItem {
   thumbnail?: string;
 }
 
-// ✅ Lazy Image Component
+// ✅ Optimized Lazy Image Component
 function LazyImage({
   src,
   alt,
@@ -45,7 +45,26 @@ function LazyImage({
   className?: string;
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (imgRef.current?.complete) {
@@ -54,181 +73,67 @@ function LazyImage({
   }, []);
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden">
       {!isLoaded && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black animate-pulse" />
       )}
-      <img
-        ref={imgRef}
-        src={src}
-        alt={alt}
-        loading="lazy"
-        onLoad={() => setIsLoaded(true)}
-        className={`${className} object-cover transition-opacity duration-300 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        } group-hover:scale-110 transition-transform duration-500`}
-      />
+      {isInView && (
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          className={`${className} object-cover transition-opacity duration-300 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          } group-hover:scale-110 transition-transform duration-500`}
+        />
+      )}
     </div>
   );
 }
 
-// ✅ Enhanced Cached Video Thumbnail Component with deduplication
-const thumbnailCache = new Map<string, Promise<string | null>>();
-const generatingThumbnails = new Map<string, Promise<string | null>>();
-
+// ✅ Optimized Video Thumbnail - No generation on load
 function VideoThumbnail({
   item,
   size = "large",
+  onVideoClick,
 }: {
   item: GalleryItem;
   size?: "large" | "small";
+  onVideoClick: () => void;
 }) {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
-  const thumbnailRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Check cache first
-    if (thumbnailCache.has(item.url)) {
-      thumbnailCache.get(item.url)?.then((url) => {
-        setThumbnailUrl(url);
-        setIsLoading(false);
-      });
-      return;
-    }
-
-    // Use provided thumbnail if available
-    if (item.thumbnail) {
-      setThumbnailUrl(item.thumbnail);
-      thumbnailCache.set(item.url, Promise.resolve(item.thumbnail));
-      setIsLoading(false);
-      return;
-    }
-
-    // Wait for visibility before generating
-    if (!isVisible) {
-      return;
-    }
-
-    // Deduplicate thumbnail generation requests
-    if (generatingThumbnails.has(item.url)) {
-      generatingThumbnails.get(item.url)?.then((url) => {
-        setThumbnailUrl(url);
-        setIsLoading(false);
-      });
-      return;
-    }
-
-    // Generate new thumbnail
-    const generationPromise = new Promise<string | null>((resolve) => {
-      const video = document.createElement("video");
-      video.crossOrigin = "anonymous";
-      video.preload = "metadata";
-      video.muted = true;
-
-      let isMounted = true;
-
-      const cleanup = () => {
-        video.remove();
-        generatingThumbnails.delete(item.url);
-      };
-
-      const captureThumbnail = () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext("2d");
-          if (ctx && isMounted) {
-            ctx.drawImage(video, 0, 0);
-            const thumbnail = canvas.toDataURL("image/jpeg", 0.6);
-            setThumbnailUrl(thumbnail);
-            setIsLoading(false);
-            resolve(thumbnail);
-          } else {
-            resolve(null);
-          }
-        } catch (error) {
-          console.error("Failed to generate thumbnail:", error);
-          if (isMounted) {
-            setIsLoading(false);
-            resolve(null);
-          }
-        }
-        cleanup();
-      };
-
-      const onLoadedData = () => {
-        try {
-          video.currentTime = 1;
-        } catch (error) {
-          console.error("Failed to seek video:", error);
-          cleanup();
-        }
-      };
-
-      video.addEventListener("loadeddata", onLoadedData);
-      video.addEventListener("seeked", captureThumbnail);
-      video.addEventListener("error", () => {
-        if (isMounted) {
-          setIsLoading(false);
-          resolve(null);
-        }
-        cleanup();
-      });
-
-      video.src = item.url;
-      video.load();
-    });
-
-    generatingThumbnails.set(item.url, generationPromise);
-  }, [item.url, item.thumbnail, isVisible]);
-
-  // Intersection Observer for lazy generation
-  useEffect(() => {
-    if (thumbnailCache.has(item.url) || item.thumbnail) {
-      setIsLoading(false);
-      return;
-    }
-
-    if (!thumbnailRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px", threshold: 0.1 },
-    );
-
-    observer.observe(thumbnailRef.current);
-    return () => observer.disconnect();
-  }, [item.url, item.thumbnail]);
+  // Use provided thumbnail if available, otherwise show placeholder
+  const hasThumbnail = !!item.thumbnail;
 
   return (
     <div
-      ref={thumbnailRef}
-      className="relative w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden"
+      onClick={(e) => {
+        e.stopPropagation();
+        onVideoClick();
+      }}
+      className="relative w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden cursor-pointer group"
     >
-      {thumbnailUrl ? (
+      {hasThumbnail ? (
         <img
-          src={thumbnailUrl}
+          src={item.thumbnail}
           alt={item.caption}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-      ) : isLoading ? (
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="w-16 h-16 rounded-full bg-netflix-red/20 animate-pulse flex items-center justify-center">
-            <PlayCircle className="text-netflix-red/50" size={32} />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+          <div className="text-center p-4">
+            <PlayCircle
+              className="text-netflix-red/40 mx-auto mb-2"
+              size={40}
+            />
+            <p className="text-netflix-lightgray text-xs">Click to play</p>
           </div>
         </div>
-      ) : null}
+      )}
 
-      <div className="absolute inset-0 flex items-center justify-center z-10">
+      <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/20 group-hover:bg-black/0 transition-all duration-300">
         <div
           className={`
             rounded-full bg-netflix-red/90 backdrop-blur-sm flex items-center justify-center 
@@ -384,6 +289,11 @@ export default function MemoriesPage() {
     { key: "videos", label: "Videos", icon: PlayCircle },
   ] as const;
 
+  // Handle video click - only then we open the lightbox
+  const handleVideoClick = useCallback((item: GalleryItem) => {
+    setSelectedMedia(item);
+  }, []);
+
   // Render item based on type and view mode
   const renderItem = useCallback(
     (item: GalleryItem, index: number) => {
@@ -393,20 +303,25 @@ export default function MemoriesPage() {
         return (
           <div
             key={`${item.id}-${index}`}
-            onClick={() => setSelectedMedia(item)}
             className="group cursor-pointer animate-slide-in-up"
             style={{ animationDelay: `${(index % 8) * 0.05}s` }}
           >
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500">
               <div className="relative overflow-hidden rounded-xl aspect-square bg-gradient-to-br from-gray-800 to-gray-900">
                 {isVideo ? (
-                  <VideoThumbnail item={item} size="small" />
-                ) : (
-                  <LazyImage
-                    src={item.url}
-                    alt={item.caption}
-                    className="w-full h-full"
+                  <VideoThumbnail
+                    item={item}
+                    size="small"
+                    onVideoClick={() => handleVideoClick(item)}
                   />
+                ) : (
+                  <div onClick={() => setSelectedMedia(item)}>
+                    <LazyImage
+                      src={item.url}
+                      alt={item.caption}
+                      className="w-full h-full"
+                    />
+                  </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
               </div>
@@ -427,19 +342,24 @@ export default function MemoriesPage() {
         return (
           <div
             key={`${item.id}-${index}`}
-            onClick={() => setSelectedMedia(item)}
             className="group cursor-pointer flex items-center gap-5 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-netflix-red/30 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-500 animate-slide-in-up"
             style={{ animationDelay: `${(index % 8) * 0.05}s` }}
           >
             <div className="relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800 to-gray-900">
               {isVideo ? (
-                <VideoThumbnail item={item} size="small" />
-              ) : (
-                <LazyImage
-                  src={item.url}
-                  alt={item.caption}
-                  className="w-full h-full"
+                <VideoThumbnail
+                  item={item}
+                  size="small"
+                  onVideoClick={() => handleVideoClick(item)}
                 />
+              ) : (
+                <div onClick={() => setSelectedMedia(item)}>
+                  <LazyImage
+                    src={item.url}
+                    alt={item.caption}
+                    className="w-full h-full"
+                  />
+                </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -462,20 +382,25 @@ export default function MemoriesPage() {
       return (
         <div
           key={`${item.id}-${index}`}
-          onClick={() => setSelectedMedia(item)}
           className="group cursor-pointer animate-slide-in-up"
           style={{ animationDelay: `${(index % 8) * 0.05}s` }}
         >
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500 aspect-[4/3]">
             <div className="relative overflow-hidden rounded-2xl h-full">
               {isVideo ? (
-                <VideoThumbnail item={item} size="large" />
-              ) : (
-                <LazyImage
-                  src={item.url}
-                  alt={item.caption}
-                  className="w-full h-full"
+                <VideoThumbnail
+                  item={item}
+                  size="large"
+                  onVideoClick={() => handleVideoClick(item)}
                 />
+              ) : (
+                <div onClick={() => setSelectedMedia(item)} className="h-full">
+                  <LazyImage
+                    src={item.url}
+                    alt={item.caption}
+                    className="w-full h-full"
+                  />
+                </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
             </div>
@@ -494,7 +419,7 @@ export default function MemoriesPage() {
         </div>
       );
     },
-    [viewMode, selectedDay],
+    [viewMode, selectedDay, handleVideoClick],
   );
 
   return (

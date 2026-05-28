@@ -38,11 +38,11 @@ interface Memory {
   thumbnail?: string;
 }
 
-const DAYS = ["Gabi Day", "Crazy Day", "Welcome Day"];
+const DAYS = ["Gabi Day", "Photoshoot Day", "Welcome Day"];
 
 const DAY_FILE_MAP: Record<string, string> = {
   "Gabi Day": "/api/data/gabi_day.json",
-  "Crazy Day": "/api/data/crazy_day.json",
+  "Photoshoot Day": "/api/data/photoshot_day.json",
   "Welcome Day": "/api/data/welcome_day.json",
 };
 

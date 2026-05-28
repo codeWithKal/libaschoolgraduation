@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "type": "image",
+    "url": "/images/photoshot_day/photoshot_1.jpg",
+    "caption": "Photoshot Day image 1"
+  },
+  {
+    "id": 2,
+    "type": "image",
+    "url": "/images/photoshot_day/photoshot_2.jpg",
+    "caption": "Photoshot Day image 2"
+  },
+  {
+    "id": 3,
+    "type": "image",
+    "url": "/images/photoshot_day/photoshot_3.jpg",
+    "caption": "Photoshot Day image 3"
+  },
+  {
+    "id": 4,
+    "type": "image",
+    "url": "/images/photoshot_day/photoshot_4.jpg",
+    "caption": "Photoshot Day image 4"
+  },
+  {
+    "id": 5,
+    "type": "image",
+    "url": "/images/photoshot_day/photoshot_5.jpg",
+    "caption": "Photoshot Day image 5"
+  },
+  {
+    "id": 6,
+    "type": "image",
+    "url": "/images/photoshot_day/photoshot_6.jpg",
+    "caption": "Photoshot Day image 6"
+  },
+  {
+    "id": 7,
+    "type": "video",
+    "url": "/images/photoshot_day/photoshot_1.mp4",
+    "caption": "Photoshot Day video 1"
+  },
+  {
+    "id": 8,
+    "type": "video",
+    "url": "/images/photoshot_day/photoshot_2.mp4",
+    "caption": "Photoshot Day video 2"
+  },
+  {
+    "id": 9,
+    "type": "video",
+    "url": "/images/photoshot_day/photoshot_3.mp4",
+    "caption": "Photoshot Day video 3"
+  },
+  {
+    "id": 10,
+    "type": "video",
+    "url": "/images/photoshot_day/photoshot_4.mp4",
+    "caption": "Photoshot Day video 4"
+  },
+  {
+    "id": 11,
+    "type": "video",
+    "url": "/images/photoshot_day/photoshot_5.mp4",
+    "caption": "Photoshot Day video 5"
+  }
+]

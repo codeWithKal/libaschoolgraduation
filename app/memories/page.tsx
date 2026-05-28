@@ -39,10 +39,12 @@ function LazyImage({
   src,
   alt,
   className,
+  onClick,
 }: {
   src: string;
   alt: string;
   className?: string;
+  onClick?: () => void;
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -73,7 +75,11 @@ function LazyImage({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden">
+    <div
+      ref={containerRef}
+      className="relative w-full h-full overflow-hidden cursor-pointer"
+      onClick={onClick}
+    >
       {!isLoaded && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black animate-pulse" />
       )}
@@ -220,22 +226,22 @@ export default function MemoriesPage() {
   );
 
   const { data: gabiGallery } = useData<GalleryItem[]>("gabi_day.json");
-  const { data: crazyGallery } = useData<GalleryItem[]>("crazy_day.json");
+  const { data: crazyGallery } = useData<GalleryItem[]>("photoshot_day.json");
   const { data: welcomeGallery } = useData<GalleryItem[]>("welcome_day.json");
 
-  const days = ["Gabi Day", "Crazy Day", "Welcome Day"];
+  const days = ["Gabi Day", "Photoshoot Day", "Welcome Day"];
 
   const gallery = useMemo(() => {
     const dayFolderMap: Record<string, string> = {
       "Gabi Day": "/images/gabi_day",
-      "Crazy Day": "/images/crazy_day",
+      "Photoshoot Day": "/images/photoshot_day",
       "Welcome Day": "/images/welcome_day",
     };
 
     const selectedItems =
       selectedDay === "Gabi Day"
         ? gabiGallery
-        : selectedDay === "Crazy Day"
+        : selectedDay === "Photoshoot Day"
           ? crazyGallery
           : selectedDay === "Welcome Day"
             ? welcomeGallery
@@ -289,8 +295,8 @@ export default function MemoriesPage() {
     { key: "videos", label: "Videos", icon: PlayCircle },
   ] as const;
 
-  // Handle video click - only then we open the lightbox
-  const handleVideoClick = useCallback((item: GalleryItem) => {
+  // Handle media click - opens lightbox for all media types
+  const handleMediaClick = useCallback((item: GalleryItem) => {
     setSelectedMedia(item);
   }, []);
 
@@ -305,6 +311,7 @@ export default function MemoriesPage() {
             key={`${item.id}-${index}`}
             className="group cursor-pointer animate-slide-in-up"
             style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+            onClick={() => handleMediaClick(item)}
           >
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500">
               <div className="relative overflow-hidden rounded-xl aspect-square bg-gradient-to-br from-gray-800 to-gray-900">
@@ -312,16 +319,15 @@ export default function MemoriesPage() {
                   <VideoThumbnail
                     item={item}
                     size="small"
-                    onVideoClick={() => handleVideoClick(item)}
+                    onVideoClick={() => handleMediaClick(item)}
                   />
                 ) : (
-                  <div onClick={() => setSelectedMedia(item)}>
-                    <LazyImage
-                      src={item.url}
-                      alt={item.caption}
-                      className="w-full h-full"
-                    />
-                  </div>
+                  <LazyImage
+                    src={item.url}
+                    alt={item.caption}
+                    className="w-full h-full"
+                    onClick={() => handleMediaClick(item)}
+                  />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
               </div>
@@ -344,22 +350,22 @@ export default function MemoriesPage() {
             key={`${item.id}-${index}`}
             className="group cursor-pointer flex items-center gap-5 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-5 hover:border-netflix-red/30 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-500 animate-slide-in-up"
             style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+            onClick={() => handleMediaClick(item)}
           >
             <div className="relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800 to-gray-900">
               {isVideo ? (
                 <VideoThumbnail
                   item={item}
                   size="small"
-                  onVideoClick={() => handleVideoClick(item)}
+                  onVideoClick={() => handleMediaClick(item)}
                 />
               ) : (
-                <div onClick={() => setSelectedMedia(item)}>
-                  <LazyImage
-                    src={item.url}
-                    alt={item.caption}
-                    className="w-full h-full"
-                  />
-                </div>
+                <LazyImage
+                  src={item.url}
+                  alt={item.caption}
+                  className="w-full h-full"
+                  onClick={() => handleMediaClick(item)}
+                />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -384,6 +390,7 @@ export default function MemoriesPage() {
           key={`${item.id}-${index}`}
           className="group cursor-pointer animate-slide-in-up"
           style={{ animationDelay: `${(index % 8) * 0.05}s` }}
+          onClick={() => handleMediaClick(item)}
         >
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl p-2 hover:border-netflix-red/40 hover:-translate-y-1 transition-all duration-500 aspect-[4/3]">
             <div className="relative overflow-hidden rounded-2xl h-full">
@@ -391,16 +398,15 @@ export default function MemoriesPage() {
                 <VideoThumbnail
                   item={item}
                   size="large"
-                  onVideoClick={() => handleVideoClick(item)}
+                  onVideoClick={() => handleMediaClick(item)}
                 />
               ) : (
-                <div onClick={() => setSelectedMedia(item)} className="h-full">
-                  <LazyImage
-                    src={item.url}
-                    alt={item.caption}
-                    className="w-full h-full"
-                  />
-                </div>
+                <LazyImage
+                  src={item.url}
+                  alt={item.caption}
+                  className="w-full h-full"
+                  onClick={() => handleMediaClick(item)}
+                />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
             </div>
@@ -419,7 +425,7 @@ export default function MemoriesPage() {
         </div>
       );
     },
-    [viewMode, selectedDay, handleVideoClick],
+    [viewMode, selectedDay, handleMediaClick],
   );
 
   return (

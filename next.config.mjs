@@ -5,7 +5,8 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    qualities: [75, 95], // Add this line
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

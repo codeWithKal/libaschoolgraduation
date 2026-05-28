@@ -11,7 +11,7 @@ import Footer from "@/components/footer";
 interface Student {
   id: number;
   name: string;
-  photo?: string;
+  cover_image: string;
   photo_url?: string;
 }
 
@@ -46,9 +46,9 @@ export default function Home() {
         // Filter students with valid photos (not base64 or external URLs)
         const studentsWithPhotos = students.filter(
           (s) =>
-            s.photo &&
-            !s.photo.startsWith("data:") &&
-            !s.photo.startsWith("https://"),
+            s.cover_image &&
+            !s.cover_image.startsWith("data:") &&
+            !s.cover_image.startsWith("https://"),
         );
 
         // Shuffle and pick random students
@@ -60,9 +60,9 @@ export default function Home() {
         // Format for display
         const formatted = selected.map((student, index) => ({
           id: student.id,
-          src: student.photo?.startsWith("images/")
-            ? `/${student.photo}`
-            : student.photo || "",
+          src: student.cover_image?.startsWith("images/")
+            ? `/${student.cover_image}`
+            : student.cover_image || "",
           alt: student.name,
         }));
 
@@ -124,12 +124,197 @@ export default function Home() {
   // Fallback student images
   function getFallbackStudentImages() {
     return [
-      { id: 1, src: "/images/students/student1.jpg", alt: "Student 1" },
-      { id: 2, src: "/images/students/student2.jpg", alt: "Student 2" },
-      { id: 3, src: "/images/students/student3.jpg", alt: "Student 3" },
-      { id: 4, src: "/images/students/student4.jpg", alt: "Student 4" },
-      { id: 5, src: "/images/students/student5.jpg", alt: "Student 5" },
-      { id: 6, src: "/images/students/student1.jpg", alt: "Student 6" },
+      {
+        id: 1,
+        src: "/images/students/full_image/addis_ersido.jpg",
+        alt: "Addis Ersido",
+      },
+      {
+        id: 2,
+        src: "/images/students/full_image/amerti_daniel.jpg",
+        alt: "Amerti Daniel",
+      },
+      {
+        id: 3,
+        src: "/images/students/full_image/asset_ersido.jpg",
+        alt: "Asset ersido",
+      },
+      {
+        id: 4,
+        src: "/images/students/full_image/ayssa_albeza.jpg",
+        alt: "Ayssa Albeza",
+      },
+      {
+        id: 5,
+        src: "/images/students/full_image/behiwot_lelisa.jpg",
+        alt: "Behiwot Lelisa",
+      },
+      {
+        id: 6,
+        src: "/images/students/full_image/bezawit_ngea.jpg",
+        alt: "Bezawit Ngea",
+      },
+      {
+        id: 7,
+        src: "/images/students/full_image/biruk_demeke.jpg",
+        alt: "Biruk Demeke",
+      },
+      {
+        id: 8,
+        src: "/images/students/full_image/blen_hamba.jpg",
+        alt: "Blen Hamba",
+      },
+      {
+        id: 9,
+        src: "/images/students/full_image/daniel_demeke.jpg",
+        alt: "Daniel Demeke",
+      },
+      {
+        id: 10,
+        src: "/images/students/full_image/dibora_biniyam.jpg",
+        alt: "Dibora Biniyam",
+      },
+      {
+        id: 11,
+        src: "/images/students/full_image/edlawit_akalu.jpg",
+        alt: "Edlawit Akalu",
+      },
+      {
+        id: 12,
+        src: "/images/students/full_image/eliud_tewdros.jpg",
+        alt: "Eliud Tewdros",
+      },
+      {
+        id: 13,
+        src: "/images/students/full_image/emahus_dereje.jpg",
+        alt: "Emahus Dereje",
+      },
+      {
+        id: 14,
+        src: "/images/students/full_image/estifanos_abebaw.jpg",
+        alt: "Estifanos Abebaw",
+      },
+      {
+        id: 15,
+        src: "/images/students/full_image/fikir_abayneh.jpg",
+        alt: "Fikir Abayneh",
+      },
+      {
+        id: 16,
+        src: "/images/students/full_image/fikir_andargachew.jpg",
+        alt: "Fikir Andargachew",
+      },
+      {
+        id: 17,
+        src: "/images/students/full_image/hawi_geremew.jpg",
+        alt: "Hawi Geremew",
+      },
+      {
+        id: 18,
+        src: "/images/students/full_image/leti_gemechis.jpg",
+        alt: "Leti Gemechis",
+      },
+      {
+        id: 19,
+        src: "/images/students/full_image/mahlet_abebe.jpg",
+        alt: "Mahlet Abebe",
+      },
+      {
+        id: 20,
+        src: "/images/students/full_image/maramawit_tesfaye.jpg",
+        alt: "Maramawit Tesfaye",
+      },
+      {
+        id: 21,
+        src: "/images/students/full_image/marta_tesfaye.jpg",
+        alt: "Marta Tesfaye",
+      },
+      {
+        id: 22,
+        src: "/images/students/full_image/messale_kassahun.jpg",
+        alt: "Messale Kassahun",
+      },
+      {
+        id: 23,
+        src: "/images/students/full_image/moa_dereje.jpg",
+        alt: "Moa Dereje",
+      },
+      {
+        id: 24,
+        src: "/images/students/full_image/moyka_tesfaye.jpg",
+        alt: "Moyka Tesfaye",
+      },
+      {
+        id: 25,
+        src: "/images/students/full_image/nahom_yonas.jpg",
+        alt: "Nahom Yonas",
+      },
+      {
+        id: 26,
+        src: "/images/students/full_image/nahusenay_tesfaye.jpg",
+        alt: "Nahusenay Tesfaye",
+      },
+      {
+        id: 27,
+        src: "/images/students/full_image/naol_feleke.jpg",
+        alt: "Naol Feleke",
+      },
+      {
+        id: 28,
+        src: "/images/students/full_image/nathnael_jemberu.jpg",
+        alt: "Nathnael Jemberu",
+      },
+      {
+        id: 29,
+        src: "/images/students/full_image/nuhamin_abebe.jpg",
+        alt: "Nuhamin Abebe",
+      },
+      {
+        id: 30,
+        src: "/images/students/full_image/sifen_bulcha.jpg",
+        alt: "Sifen Bulcha",
+      },
+      {
+        id: 31,
+        src: "/images/students/full_image/sumeya_endres.jpg",
+        alt: "Sumeya Endres",
+      },
+      {
+        id: 32,
+        src: "/images/students/full_image/tilahun_gezahegn.jpg",
+        alt: "Tilahun Gezahegn",
+      },
+      {
+        id: 33,
+        src: "/images/students/full_image/yeabsira_lema.jpg",
+        alt: "Yeabsira Lema",
+      },
+      {
+        id: 34,
+        src: "/images/students/full_image/yeabsira_solomon.jpg",
+        alt: "Yeabsira Solomon",
+      },
+      {
+        id: 35,
+        src: "/images/students/full_image/yididiya_dawit.jpg",
+        alt: "Yididiya Dawit",
+      },
+      {
+        id: 36,
+        src: "/images/students/full_image/yohana_eyob.jpg",
+        alt: "Yohana Eyob",
+      },
+      {
+        id: 37,
+        src: "/images/students/full_image/yonas_berta.jpg",
+        alt: "Yonas Berta",
+      },
+      {
+        id: 38,
+        src: "/images/students/full_image/rodas_daniel.jpg",
+        alt: "Rodas Daniel",
+      },
+      { id: 39, src: "/images/students/full_image/sifen.jpg", alt: "Sifen" },
     ];
   }
 

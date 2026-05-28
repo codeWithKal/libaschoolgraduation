@@ -28,7 +28,8 @@ interface Student {
   id: number;
   name: string;
   stream: string;
-  photo: string;
+  cover_image: string;
+  full_image: string;
   bio: string;
   last_word: string;
   messages: string[];
@@ -241,7 +242,7 @@ export default function StudentsPage() {
       >
         <div className="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
           <LazyStudentImage
-            src={student.photo}
+            src={student.cover_image}
             alt={student.name}
             className="w-full h-full"
           />
@@ -286,7 +287,7 @@ export default function StudentsPage() {
         >
           <div className="relative overflow-hidden rounded-xl aspect-square">
             <LazyStudentImage
-              src={student.photo}
+              src={student.cover_image}
               alt={student.name}
               className="w-full h-full"
             />

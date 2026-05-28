@@ -6,7 +6,8 @@
     "bio": "engineer",
     "last_word": "\"A tree falls the way it leans, be careful which way you lean.\"",
     "stream": "Natural science",
-    "photo": "images/students/addis_ersido.jpg"
+    "cover_image": "images/students/cover_image/addis_ersido.jpg",
+    "full_image": "images/students/full_image/addis_ersido.jpg"
   },
   {
     "id": 2,
@@ -15,7 +16,8 @@
     "bio": "business woman",
     "last_word": "\"Designed by grace, destined for his glory.\"",
     "stream": "Natural science",
-    "photo": "images/students/amerti_daniel.jpg"
+    "cover_image": "images/students/cover_image/amerti_daniel.jpg",
+    "full_image": "images/students/full_image/amerti_daniel.jpg"
   },
   {
     "id": 3,
@@ -24,7 +26,8 @@
     "bio": "Rich",
     "last_word": "\"I came, I saw, I conquered.\"",
     "stream": "Natural science",
-    "photo": "images/students/asset_ersido.jpg"
+    "cover_image": "images/students/cover_image/asset_ersido.jpg",
+    "full_image": "images/students/full_image/asset_ersido.jpg"
   },
   {
     "id": 4,
@@ -33,7 +36,8 @@
     "bio": "Entrepreneur",
     "last_word": "\"To fall asleep, you must act asleep.\"",
     "stream": "Natural science",
-    "photo": "images/students/ayssa_albeza.jpg"
+    "cover_image": "images/students/cover_image/ayssa_albeza.jpg",
+    "full_image": "images/students/full_image/ayssa_albeza.jpg"
   },
   {
     "id": 5,
@@ -42,7 +46,8 @@
     "bio": "Architecture",
     "last_word": "\"Chosen by God, made for purpose.\"",
     "stream": "Natural science",
-    "photo": "images/students/behiwot_lelisa.jpg"
+    "cover_image": "images/students/cover_image/behiwot_lelisa.jpg",
+    "full_image": "images/students/full_image/behiwot_lelisa.jpg"
   },
   {
     "id": 6,
@@ -51,7 +56,8 @@
     "bio": "Theologist",
     "last_word": "\"Where wisdom exiled me, grace founded me.\"",
     "stream": "Natural science",
-    "photo": "images/students/bezawit_ngea.jpg"
+    "cover_image": "images/students/cover_image/bezawit_ngea.jpg",
+    "full_image": "images/students/full_image/bezawit_ngea.jpg"
   },
   {
     "id": 7,
@@ -60,7 +66,8 @@
     "bio": "Business man",
     "last_word": "\"No introduction needed.\"",
     "stream": "Social science",
-    "photo": "images/students/biruk_demeke.jpg"
+    "cover_image": "images/students/cover_image/biruk_demeke.jpg",
+    "full_image": "images/students/full_image/biruk_demeke.jpg"
   },
   {
     "id": 8,
@@ -69,7 +76,8 @@
     "bio": "Pediatrician",
     "last_word": "\"Though she be but little she is fierce. Shakesphear\"",
     "stream": "Natural science",
-    "photo": "images/students/blen_hamba.jpg"
+    "cover_image": "images/students/cover_image/blen_hamba.jpg",
+    "full_image": "images/students/full_image/blen_hamba.jpg"
   },
   {
     "id": 9,
@@ -78,7 +86,8 @@
     "bio": "Rich",
     "last_word": "\"ልቦና ብስምዒት እንተ ዘይተገዘአን ስም ብርሃን አብ ጸልማት ይበርትዕ\"",
     "stream": "Natural science",
-    "photo": "images/students/daniel_demeke.jpg"
+    "cover_image": "images/students/cover_image/daniel_demeke.jpg",
+    "full_image": "images/students/full_image/daniel_demeke.jpg"
   },
   {
     "id": 10,
@@ -87,7 +96,8 @@
     "bio": "Lawyer",
     "last_word": "\"still soft, still strong, still dibo.\"",
     "stream": "Social science",
-    "photo": "images/students/dibora_biniyam.jpg"
+    "cover_image": "images/students/cover_image/dibora_biniyam.jpg",
+    "full_image": "images/students/full_image/dibora_biniyam.jpg"
   },
   {
     "id": 11,
@@ -96,16 +106,18 @@
     "bio": "Criminal defence attorney",
     "last_word": "\"More than just a pretty face.\"",
     "stream": "Social science",
-    "photo": "images/students/edlawit_akalu.jpg"
+    "cover_image": "images/students/cover_image/edlawit_akalu.jpg",
+    "full_image": "images/students/full_image/edlawit_akalu.jpg"
   },
   {
     "id": 12,
-    "name": "Elihud Tewdros",
+    "name": "Eliud Tewdros",
     "phone_number": "+251976773133",
     "bio": "Pilot",
     "last_word": "\"What we see unfolding now is the first sign of that legacy.\"",
     "stream": "Natural science",
-    "photo": "images/students/elihud_tewdros.jpg"
+    "cover_image": "images/students/cover_image/eliud_tewdros.jpg",
+    "full_image": "images/students/full_image/eliud_tewdros.jpg"
   },
   {
     "id": 13,
@@ -114,7 +126,8 @@
     "bio": "Aircraft maintenance technician.",
     "last_word": "\"With God all things are possible\" Matthew 19:26",
     "stream": "Natural science",
-    "photo": "images/students/emahus_dereje.jpg"
+    "cover_image": "images/students/cover_image/emahus_dereje.jpg",
+    "full_image": "images/students/full_image/emahus_dereje.jpg"
   },
   {
     "id": 14,
@@ -123,7 +136,8 @@
     "bio": "\"ነጋዴ\" Multi-Billionaire",
     "last_word": "\"Everything will be okay in the end....if its not okay, this is not the end.\"",
     "stream": "Social science",
-    "photo": "images/students/estifanos_abebaw.jpg"
+    "cover_image": "images/students/cover_image/estifanos_abebaw.jpg",
+    "full_image": "images/students/full_image/estifanos_abebaw.jpg"
   },
   {
     "id": 15,
@@ -132,7 +146,8 @@
     "bio": "Entrepreneurship",
     "last_word": "\"Jesus saves.\"",
     "stream": "Natural science",
-    "photo": "images/students/fikir_abayneh.jpg"
+    "cover_image": "images/students/cover_image/fikir_abayneh.jpg",
+    "full_image": "images/students/full_image/fikir_abayneh.jpg"
   },
   {
     "id": 16,
@@ -141,7 +156,8 @@
     "bio": "surgeon",
     "last_word": "\"Class dismissed, patriarchy next.\"",
     "stream": "Natural science",
-    "photo": "images/students/fikir_andargachew.jpg"
+    "cover_image": "images/students/cover_image/fikir_andargachew.jpg",
+    "full_image": "images/students/full_image/fikir_andargachew.jpg"
   },
   {
     "id": 17,
@@ -150,7 +166,8 @@
     "bio": "Business woman",
     "last_word": "\"Heaven stands with me.\"",
     "stream": "Social science",
-    "photo": "images/students/hawi_geremew.jpg"
+    "cover_image": "images/students/cover_image/hawi_geremew.jpg",
+    "full_image": "images/students/full_image/hawi_geremew.jpg"
   },
   {
     "id": 18,
@@ -159,7 +176,8 @@
     "bio": "Creative director,photographer and cinematographer.",
     "last_word": "\"God did!\"",
     "stream": "Social science",
-    "photo": "images/students/leti_gemechis.jpg"
+    "cover_image": "images/students/cover_image/leti_gemechis.jpg",
+    "full_image": "images/students/full_image/leti_gemechis.jpg"
   },
   {
     "id": 19,
@@ -168,7 +186,8 @@
     "bio": "Millionaire",
     "last_word": "\"Too pretty to stress.\"",
     "stream": "Natural science",
-    "photo": "images/students/mahlet_abebe.jpg"
+    "cover_image": "images/students/cover_image/mahlet_abebe.jpg",
+    "full_image": "images/students/full_image/mahlet_abebe.jpg"
   },
   {
     "id": 20,
@@ -177,7 +196,8 @@
     "bio": "Business woman",
     "last_word": "\"Mission accomplished...for now.\"",
     "stream": "Social science",
-    "photo": "images/students/maramawit_tesfaye.jpg"
+    "cover_image": "images/students/cover_image/maramawit_tesfaye.jpg",
+    "full_image": "images/students/full_image/maramawit_tesfaye.jpg"
   },
   {
     "id": 21,
@@ -186,7 +206,8 @@
     "bio": "Genetic Engineer",
     "last_word": "\"Endings are just part of the way life keeps changing and moving forward.\"",
     "stream": "Natural science",
-    "photo": "images/students/marta_tesfaye.jpg"
+    "cover_image": "images/students/cover_image/marta_tesfaye.jpg",
+    "full_image": "images/students/full_image/marta_tesfaye.jpg"
   },
   {
     "id": 22,
@@ -195,7 +216,8 @@
     "bio": "Diplomat",
     "last_word": "\"At the end of my road,God was the only beginning.\"",
     "stream": "Social science",
-    "photo": "images/students/messale_kassahun.jpg"
+    "cover_image": "images/students/cover_image/messale_kassahun.jpg",
+    "full_image": "images/students/full_image/messale_kassahun.jpg"
   },
   {
     "id": 23,
@@ -204,7 +226,8 @@
     "bio": "A man",
     "last_word": "\"And just like that....\"",
     "stream": "Natural science",
-    "photo": "images/students/moa_dereje.jpg"
+    "cover_image": "images/students/cover_image/moa_dereje.jpg",
+    "full_image": "images/students/full_image/moa_dereje.jpg"
   },
   {
     "id": 24,
@@ -213,7 +236,8 @@
     "bio": "Architect",
     "last_word": "\"At the end, it was worth it.\"",
     "stream": "Natural science",
-    "photo": "images/students/moyka_tesfaye.jpg"
+    "cover_image": "images/students/cover_image/moyka_tesfaye.jpg",
+    "full_image": "images/students/full_image/moyka_tesfaye.jpg"
   },
   {
     "id": 25,
@@ -222,7 +246,8 @@
     "bio": "Chemical-Engineer with minor in Entrepreneurship",
     "last_word": "\"And mon ami, you should see me in my crown.\"",
     "stream": "Natural science",
-    "photo": "images/students/nahom_yonas.jpg"
+    "cover_image": "images/students/cover_image/nahom_yonas.jpg",
+    "full_image": "images/students/full_image/nahom_yonas.jpg"
   },
   {
     "id": 26,
@@ -231,7 +256,8 @@
     "bio": "Entrepreneurship",
     "last_word": "\"Fortune favors the bold.\"",
     "stream": "Natural science",
-    "photo": "images/students/nahusenay_tesfaye.jpg"
+    "cover_image": "images/students/cover_image/nahusenay_tesfaye.jpg",
+    "full_image": "images/students/full_image/nahusenay_tesfaye.jpg"
   },
   {
     "id": 27,
@@ -240,16 +266,18 @@
     "bio": "Doctor",
     "last_word": "\"Timeless wisdom on life often emphasizes resilience, authenticity, and embracing the present moment.\"",
     "stream": "Natural science",
-    "photo": "images/students/naol_feleke.jpg"
+    "cover_image": "images/students/cover_image/naol_feleke.jpg",
+    "full_image": "images/students/full_image/naol_feleke.jpg"
   },
   {
     "id": 28,
-    "name": "Nathnael Jember",
+    "name": "Nathnael Jemberu",
     "phone_number": "+251973122116",
     "bio": null,
     "last_word": null,
     "stream": "Natural science",
-    "photo": "images/students/nathnael_jember.jpg"
+    "cover_image": "images/students/cover_image/nathnael_jemberu.jpg",
+    "full_image": "images/students/full_image/nathnael_jemberu.jpg"
   },
   {
     "id": 29,
@@ -258,7 +286,8 @@
     "bio": "International relations analyst",
     "last_word": "\"In the end, It all made sense.\"",
     "stream": "Social science",
-    "photo": "images/students/nuhamin_abebe.jpg"
+    "cover_image": "images/students/cover_image/nuhamin_abebe.jpg",
+    "full_image": "images/students/full_image/nuhamin_abebe.jpg"
   },
   {
     "id": 30,
@@ -267,7 +296,8 @@
     "bio": null,
     "last_word": null,
     "stream": "Natural science",
-    "photo": "images/students/sifen_bulcha.jpg"
+    "cover_image": "images/students/cover_image/sifen_bulcha.jpg",
+    "full_image": "images/students/full_image/sifen_bulcha.jpg"
   },
   {
     "id": 31,
@@ -276,7 +306,8 @@
     "bio": "International relation and business owner",
     "last_word": "\"Sober paid off Alhamdulillah always.....mom, we did it.\"",
     "stream": "Social science",
-    "photo": "images/students/sumeya_endres.jpg"
+    "cover_image": "images/students/cover_image/sumeya_endres.jpg",
+    "full_image": "images/students/full_image/sumeya_endres.jpg"
   },
   {
     "id": 32,
@@ -285,7 +316,8 @@
     "bio": "Business man",
     "last_word": "\"The beginning of the end.\"",
     "stream": "Social science",
-    "photo": "images/students/tilahun_gezahegn.jpg"
+    "cover_image": "images/students/cover_image/tilahun_gezahegn.jpg",
+    "full_image": "images/students/full_image/tilahun_gezahegn.jpg"
   },
   {
     "id": 33,
@@ -294,7 +326,8 @@
     "bio": null,
     "last_word": "\" ብዙኀ እንዘ አነበብ ብዙኀ እጤይቅ ወእምድኅረዝ ምንተ ከመ ኢየአምር አእመርኩ ፍጹመ \"  ቀሲስ ቮልቴር          ኂት ማይ ላይን ዒፍ ዩ ወ'ነ ጌት ኃይ ዊዝ ሚ\"",
     "stream": "Natural science",
-    "photo": "images/students/yeabsira_lema.jpg"
+    "cover_image": "images/students/cover_image/yeabsira_lema.jpg",
+    "full_image": "images/students/full_image/yeabsira_lema.jpg"
   },
   {
     "id": 34,
@@ -303,7 +336,8 @@
     "bio": "Business man",
     "last_word": "\"I think therefore I am.\"",
     "stream": "Natural science",
-    "photo": "images/students/yeabsira_solomon.jpg"
+    "cover_image": "images/students/cover_image/yeabsira_solomon.jpg",
+    "full_image": "images/students/full_image/yeabsira_solomon.jpg"
   },
   {
     "id": 35,
@@ -312,7 +346,8 @@
     "bio": "Astronaut(Engineer)",
     "last_word": "\"The day you die is the day you live\"",
     "stream": "Natural science",
-    "photo": "images/students/yididiya_dawit.jpg"
+    "cover_image": "images/students/cover_image/yididiya_dawit.jpg",
+    "full_image": "images/students/full_image/yididiya_dawit.jpg"
   },
   {
     "id": 36,
@@ -321,7 +356,8 @@
     "bio": null,
     "last_word": "\"The key is simple, but to be simple requires effort.\"",
     "stream": "Natural science",
-    "photo": "images/students/yohana_eyob.jpg"
+    "cover_image": "images/students/cover_image/yohana_eyob.jpg",
+    "full_image": "images/students/full_image/yohana_eyob.jpg"
   },
   {
     "id": 37,
@@ -330,6 +366,27 @@
     "bio": "Contractor",
     "last_word": "\"The best is yet to come.\"",
     "stream": "Social science",
-    "photo": "images/students/yonas_berta.jpg"
+    "cover_image": "images/students/cover_image/yonas_berta.jpg",
+    "full_image": "images/students/full_image/yonas_berta.jpg"
+  },
+  {
+    "id": 38,
+    "name": "Rodas Daniel",
+    "phone_number": "+251960680649",
+    "bio": "Business man & CEO",
+    "last_word": "\"Walking Testimony.\"",
+    "stream": "Social science",
+    "cover_image": "images/students/cover_image/rodas_daniel.jpg",
+    "full_image": "images/students/full_image/rodas_daniel.jpg"
+  },
+  {
+    "id": 39,
+    "name": "Sifen",
+    "phone_number": "+251979558493",
+    "bio": "Prime minister",
+    "last_word": "\"Long story short, I survived.\"",
+    "stream": "Social science",
+    "cover_image": "images/students/cover_image/sifen.jpg",
+    "full_image": "images/students/full_image/sifen.jpg"
   }
 ]

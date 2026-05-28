@@ -76,7 +76,7 @@ export default function AdminPage() {
         fetch("/api/data/teachers.json"),
         fetch("/api/data/gabi_day.json"),
         fetch("/api/data/welcome_day.json"),
-        fetch("/api/data/crazy_day.json"),
+        fetch("/api/data/photoshot_day.json"),
         fetch("/api/data/gallery.json"),
         fetch("/api/data/guestbook.json"),
       ]);

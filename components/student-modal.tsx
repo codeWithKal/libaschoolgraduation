@@ -1,15 +1,17 @@
 "use client";
 
 import { useRef } from "react";
-import { X } from "lucide-react";
+import { X, Phone } from "lucide-react";
 import Image from "next/image";
 
 interface StudentModalProps {
   student: {
     id: number;
     name: string;
+    phone_number: string | null;
     stream: string;
-    photo: string;
+    cover_image: string;
+    full_image: string;
     bio: string;
     last_word: string;
     messages: string[];
@@ -83,7 +85,7 @@ export default function StudentModal({
         {/* Image */}
         <div className="relative w-full h-96 bg-netflix-black">
           <Image
-            src={student.photo}
+            src={student.full_image}
             alt={student.name}
             fill
             className="w-full h-full object-contain"
@@ -109,6 +111,19 @@ export default function StudentModal({
             >
               {student.stream}
             </p>
+
+            {/* Phone Number */}
+            {student.phone_number && (
+              <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-netflix-gray/10 border border-netflix-gray/20">
+                <Phone size={18} className="text-netflix-red" />
+                <a
+                  href={`tel:${student.phone_number}`}
+                  className="text-netflix-lightgray hover:text-white transition-colors"
+                >
+                  {student.phone_number}
+                </a>
+              </div>
+            )}
 
             <p className="text-netflix-lightgray text-base leading-relaxed">
               {student.bio}

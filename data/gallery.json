@@ -27,7 +27,7 @@
     "id": 4,
     "type": "image",
     "url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=600&fit=crop",
-    "caption": "Crazy Day color fights",
+    "caption": "Photoshoot Day color fights",
     "studentId": 4,
     "approved": true
   },
@@ -35,7 +35,7 @@
     "id": 5,
     "type": "video",
     "url": "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
-    "caption": "Crazy Day jam session",
+    "caption": "Photoshoot Day jam session",
     "studentId": 5,
     "approved": true
   },
@@ -43,7 +43,7 @@
     "id": 6,
     "type": "image",
     "url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=600&fit=crop&blend=ff0000",
-    "caption": "Pranks and fun on Crazy Day",
+    "caption": "Pranks and fun on Photoshoot Day",
     "studentId": 6,
     "approved": true
   },

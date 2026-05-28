@@ -7,7 +7,7 @@ const allowedFiles = new Set([
   "students.json",
   "teachers.json",
   "gabi_day.json",
-  "crazy_day.json",
+  "photoshot_day.json",
   "welcome_day.json",
   "gallery.json",
   "guestbook.json",

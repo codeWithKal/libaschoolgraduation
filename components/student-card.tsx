@@ -8,7 +8,7 @@ interface StudentCardProps {
     id: number;
     name: string;
     stream: string;
-    photo: string;
+    cover_image: string;
     bio: string;
     last_word?: string;
     messages?: string[];
@@ -28,7 +28,7 @@ export default function StudentCard({ student, onClick }: StudentCardProps) {
     >
       {/* Image */}
       <Image
-        src={student.photo}
+        src={student.cover_image}
         alt={student.name}
         fill
         className="w-full h-full object-cover group-hover:scale-110 transition duration-300"

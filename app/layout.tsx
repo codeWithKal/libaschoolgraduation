@@ -1,45 +1,9 @@
 import type { Metadata } from "next";
-import {
-  Geist,
-  Geist_Mono,
-  Playfair_Display,
-  Lora,
-  Cormorant_Garamond,
-  Poppins,
-  Montserrat,
-} from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-import { Lavishly_Yours } from "next/font/google";
 
-const _geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
-const _geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
-const _playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-display",
-});
-const _lora = Lora({ subsets: ["latin"], variable: "--font-serif" });
-const _cormorant = Cormorant_Garamond({
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-elegant",
-});
-const _poppins = Poppins({
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-modern",
-});
-const _montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-heading",
-});
-const _lavishly = Lavishly_Yours({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-lavishly",
-});
 export const metadata: Metadata = {
-  title: "NOVAREING - Graduation Celebration ",
+  title: "NOVAREING - Graduation Celebration",
   description:
     "Experience an unforgettable graduation celebration. Browse graduating student profiles, share memories, and celebrate this momentous milestone together.",
   metadataBase: new URL("https://example.com"),
@@ -48,27 +12,6 @@ export const metadata: Metadata = {
     width: "device-width",
     initialScale: 1,
     userScalable: false,
-  },
-  icons: {
-    icon: [
-      {
-        url: "/logo.jpg",
-        type: "image/jpeg",
-      },
-      {
-        url: "/logo.jpg",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/logo.jpg",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/logo.jpg",
   },
 };
 
@@ -79,8 +22,29 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark bg-netflix-dark">
+      <head>
+        {/* Load fonts from a CDN with better reliability */}
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Playfair+Display:wght@400;600;700;800;900&family=Lora:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Poppins:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Lavishly+Yours&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
-        className={`${_geist.variable} ${_playfairDisplay.variable} ${_lora.variable} ${_cormorant.variable} ${_poppins.variable} ${_montserrat.variable} ${_lavishly.variable} font-sans antialiased bg-netflix-dark text-white`}
+        className="antialiased bg-netflix-dark text-white"
+        style={{
+          fontFamily:
+            "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        }}
       >
         {children}
         {process.env.NODE_ENV === "production" && <Analytics />}

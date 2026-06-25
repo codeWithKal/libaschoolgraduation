@@ -1,12 +1,13 @@
+// app/shared-gallery/page.tsx
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Menu, X, Heart, Share2, Download, Play } from "lucide-react";
-import { useData } from "@/hooks/useData";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 import UploadMemory from "@/components/UploadMemory";
+import { useGalleryData } from "@/hooks/useGalleryData";
 
 const LightBox = dynamic(() => import("@/components/lightbox"), {
   loading: () => null,
@@ -336,7 +337,8 @@ export default function SharedGalleryPage() {
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
 
-  const { data: gallery } = useData<GalleryItem[]>("gallery.json");
+  // Use Supabase data hook
+  const { gallery, loading, refresh } = useGalleryData();
 
   // ✅ ONLY APPROVED ITEMS - Memoized to prevent recalculation
   const approvedGallery = useMemo(
@@ -400,7 +402,12 @@ export default function SharedGalleryPage() {
 
   const handleUploadComplete = useCallback(() => {
     setIsUploading(false);
-    // Gallery will auto-update via useData hook
+    // Gallery will auto-update via the real-time subscription in useGalleryData
+    refresh();
+  }, [refresh]);
+
+  const handleUploadStart = useCallback(() => {
+    setIsUploading(true);
   }, []);
 
   // Memoized gallery item component
@@ -482,6 +489,18 @@ export default function SharedGalleryPage() {
     [likedItems, handleLike, handleShare, handleDownload],
   );
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-netflix-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-netflix-red/30 border-t-netflix-red rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-netflix-lightgray">Loading memories...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-netflix-dark overflow-hidden">
       {/* Background Glow */}
@@ -539,7 +558,10 @@ export default function SharedGalleryPage() {
               <p className="text-netflix-lightgray mb-6">
                 Share a new photo or video from the graduation celebration.
               </p>
-              <UploadMemory onUploaded={handleUploadComplete} />
+              <UploadMemory
+                onUploaded={handleUploadComplete}
+                onUploadStart={handleUploadStart}
+              />
               {isUploading && (
                 <div className="mt-4 flex items-center gap-3 text-netflix-lightgray">
                   <div className="w-5 h-5 border-2 border-netflix-red border-t-transparent rounded-full animate-spin" />

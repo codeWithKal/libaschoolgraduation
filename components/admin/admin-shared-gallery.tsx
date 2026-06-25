@@ -1,3 +1,4 @@
+// components/admin/admin-shared-gallery.tsx
 "use client";
 
 import { useEffect, useState, useCallback, memo } from "react";
@@ -19,6 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 // Lazy load Lightbox for better performance
 const LightBox = dynamic(() => import("@/components/lightbox"), {
@@ -33,7 +35,8 @@ interface GalleryItem {
   caption: string;
   studentId: number;
   approved: boolean;
-  day?: string; // Add optional day property
+  day?: string;
+  created_at?: string;
 }
 
 // Toast notification component
@@ -204,6 +207,18 @@ const EditModal = memo(function EditModal({
               placeholder="Enter caption..."
             />
           </div>
+
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">Day</label>
+            <input
+              value={editedItem.day || ""}
+              onChange={(e) =>
+                setEditedItem({ ...editedItem, day: e.target.value })
+              }
+              className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-yellow-500/50 focus:outline-none transition"
+              placeholder="Enter day..."
+            />
+          </div>
         </div>
 
         <div className="flex gap-3 pt-2">
@@ -254,17 +269,35 @@ export default function AdminSharedGallery() {
   >("all");
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 
-  // Fetch items with error handling
+  // Fetch items from Supabase
   const fetchItems = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch("/api/gallery");
-      if (!res.ok) throw new Error("Failed to fetch items");
-      const data = await res.json();
-      setItems(data);
+      setLoading(true);
+
+      const { data, error: fetchError } = await supabase
+        .from("gallery")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      // Transform data to match GalleryItem interface
+      const transformedItems = data.map((item) => ({
+        id: item.id,
+        type: item.type,
+        url: item.url,
+        caption: item.caption,
+        studentId: item.student_id,
+        approved: item.approved,
+        day: item.day || "Welcome Day",
+        created_at: item.created_at,
+      }));
+
+      setItems(transformedItems);
     } catch (err) {
       setError("Failed to load gallery items. Please try again.");
-      console.error(err);
+      console.error("Error fetching items:", err);
     } finally {
       setLoading(false);
     }
@@ -274,7 +307,7 @@ export default function AdminSharedGallery() {
     fetchItems();
   }, [fetchItems]);
 
-  // Toggle approval with loading state
+  // Toggle approval
   const toggleApproval = useCallback(
     async (item: GalleryItem, e?: React.MouseEvent) => {
       e?.stopPropagation();
@@ -282,16 +315,12 @@ export default function AdminSharedGallery() {
       setProcessingIds((prev) => new Set(prev).add(item.id));
 
       try {
-        const res = await fetch("/api/gallery", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...item,
-            approved: !item.approved,
-          }),
-        });
+        const { error: updateError } = await supabase
+          .from("gallery")
+          .update({ approved: !item.approved })
+          .eq("id", item.id);
 
-        if (!res.ok) throw new Error("Failed to update item");
+        if (updateError) throw updateError;
 
         setToast({
           message: item.approved
@@ -306,7 +335,7 @@ export default function AdminSharedGallery() {
           message: "Failed to update item. Please try again.",
           type: "error",
         });
-        console.error(err);
+        console.error("Error toggling approval:", err);
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -318,7 +347,7 @@ export default function AdminSharedGallery() {
     [fetchItems],
   );
 
-  // Delete item with confirmation
+  // Delete item
   const handleDelete = useCallback(
     async (id: number) => {
       if (
@@ -331,11 +360,39 @@ export default function AdminSharedGallery() {
       setProcessingIds((prev) => new Set(prev).add(id));
 
       try {
-        const res = await fetch(`/api/gallery?id=${id}`, {
-          method: "DELETE",
-        });
+        // First get the item to get the file path
+        const { data: item, error: fetchError } = await supabase
+          .from("gallery")
+          .select("url")
+          .eq("id", id)
+          .single();
 
-        if (!res.ok) throw new Error("Failed to delete item");
+        if (fetchError) throw fetchError;
+
+        // Extract file path from URL
+        const urlParts = item.url.split("/");
+        const filePath = urlParts
+          .slice(urlParts.indexOf("gallery") + 1)
+          .join("/");
+
+        // Delete from storage
+        if (filePath) {
+          const { error: storageError } = await supabase.storage
+            .from("gallery")
+            .remove([filePath]);
+
+          if (storageError) {
+            console.error("Storage delete error:", storageError);
+          }
+        }
+
+        // Delete from database
+        const { error: deleteError } = await supabase
+          .from("gallery")
+          .delete()
+          .eq("id", id);
+
+        if (deleteError) throw deleteError;
 
         setToast({
           message: "Item deleted successfully",
@@ -348,7 +405,7 @@ export default function AdminSharedGallery() {
           message: "Failed to delete item. Please try again.",
           type: "error",
         });
-        console.error(err);
+        console.error("Error deleting item:", err);
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -371,17 +428,16 @@ export default function AdminSharedGallery() {
     }
 
     try {
-      const res = await fetch("/api/gallery", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newItem,
-          approved: false,
-          type: newItem.type || "image",
-        }),
+      const { error: insertError } = await supabase.from("gallery").insert({
+        type: newItem.type || "image",
+        url: newItem.url,
+        caption: newItem.caption,
+        student_id: 1,
+        day: newItem.day || "Welcome Day",
+        approved: false,
       });
 
-      if (!res.ok) throw new Error("Failed to add item");
+      if (insertError) throw insertError;
 
       setToast({
         message: "Item added successfully",
@@ -396,7 +452,7 @@ export default function AdminSharedGallery() {
         message: "Failed to add item. Please try again.",
         type: "error",
       });
-      console.error(err);
+      console.error("Error adding item:", err);
     }
   }, [newItem, fetchItems]);
 
@@ -404,13 +460,15 @@ export default function AdminSharedGallery() {
   const handleEditSave = useCallback(
     async (editedItem: GalleryItem) => {
       try {
-        const res = await fetch("/api/gallery", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editedItem),
-        });
+        const { error: updateError } = await supabase
+          .from("gallery")
+          .update({
+            caption: editedItem.caption,
+            day: editedItem.day,
+          })
+          .eq("id", editedItem.id);
 
-        if (!res.ok) throw new Error("Failed to update item");
+        if (updateError) throw updateError;
 
         setToast({
           message: "Item updated successfully",
@@ -424,7 +482,7 @@ export default function AdminSharedGallery() {
           message: "Failed to update item. Please try again.",
           type: "error",
         });
-        console.error(err);
+        console.error("Error updating item:", err);
       }
     },
     [fetchItems],
@@ -642,6 +700,15 @@ export default function AdminSharedGallery() {
                   value={newItem.url || ""}
                 />
 
+                <input
+                  placeholder="Day (e.g., Welcome Day)"
+                  className="w-full p-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-500/50 focus:outline-none transition"
+                  onChange={(e) =>
+                    setNewItem({ ...newItem, day: e.target.value })
+                  }
+                  value={newItem.day || "Welcome Day"}
+                />
+
                 <select
                   className="w-full p-3 rounded-xl bg-black/40 border border-white/10 text-white focus:border-yellow-500/50 focus:outline-none transition"
                   onChange={(e) =>
@@ -730,6 +797,13 @@ export default function AdminSharedGallery() {
                       <ImageIcon size={14} />
                     )}
                   </div>
+
+                  {/* Day Badge */}
+                  {item.day && (
+                    <div className="absolute bottom-3 left-3 px-2 py-1 rounded-full bg-black/50 backdrop-blur-sm text-xs font-medium text-white/80 border border-white/10">
+                      {item.day}
+                    </div>
+                  )}
                 </div>
 
                 {/* CONTENT */}
@@ -739,6 +813,11 @@ export default function AdminSharedGallery() {
                       {item.caption}
                     </p>
                     <p className="text-xs text-gray-500 truncate">{item.url}</p>
+                    {item.created_at && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
 
                   {/* ACTIONS */}

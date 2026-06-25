@@ -4,49 +4,34 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   LogOut,
-  Users,
   Image as ImageIcon,
   MessageSquare,
-  Settings,
+  LayoutDashboard,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import AdminStudents from "@/components/admin/admin-students";
-import AdminTeachers from "@/components/admin/admin-teachers";
-import AdminMemories from "@/components/admin/admin-memories";
 import AdminSharedGallery from "@/components/admin/admin-shared-gallery";
 import AdminGuestbook from "@/components/admin/admin-guestbook";
-import AdminSettings from "@/components/admin/admin-settings";
 import Footer from "@/components/footer";
+import { supabase } from "@/lib/supabase";
 
-type Tab =
-  | "overview"
-  | "students"
-  | "teachers"
-  | "memories"
-  | "shared-gallery"
-  | "guestbook"
-  | "settings";
+type Tab = "overview" | "shared-gallery" | "guestbook";
 
 type Stats = {
-  students: number;
-  teachers: number;
-  memories: number;
   sharedGallery: number;
   guestbook: number;
+  pendingGallery: number;
 };
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   const [stats, setStats] = useState<Stats>({
-    students: 0,
-    teachers: 0,
-    memories: 0,
     sharedGallery: 0,
     guestbook: 0,
+    pendingGallery: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   const router = useRouter();
 
@@ -62,49 +47,35 @@ export default function AdminPage() {
   }, [router]);
 
   const loadStats = async () => {
+    setLoading(true);
     try {
-      const [
-        studentsRes,
-        teachersRes,
-        gabiRes,
-        tripRes,
-        crazyRes,
-        sharedGalleryRes,
-        guestbookRes,
-      ] = await Promise.all([
-        fetch("/api/data/students.json"),
-        fetch("/api/data/teachers.json"),
-        fetch("/api/data/gabi_day.json"),
-        fetch("/api/data/welcome_day.json"),
-        fetch("/api/data/photoshot_day.json"),
-        fetch("/api/data/gallery.json"),
-        fetch("/api/data/guestbook.json"),
-      ]);
+      // Fetch gallery stats from Supabase
+      const { data: galleryData, error: galleryError } = await supabase
+        .from("gallery")
+        .select("approved", { count: "exact" });
 
-      const studentsData = await studentsRes.json();
-      const teachersData = await teachersRes.json();
-      const gabiData = await gabiRes.json();
-      const tripData = await tripRes.json();
-      const crazyData = await crazyRes.json();
-      const sharedGalleryData = await sharedGalleryRes.json();
-      const guestbookData = await guestbookRes.json();
+      if (galleryError) throw galleryError;
 
-      const memoriesTotal =
-        (Array.isArray(gabiData) ? gabiData.length : 0) +
-        (Array.isArray(tripData) ? tripData.length : 0) +
-        (Array.isArray(crazyData) ? crazyData.length : 0);
+      const totalGallery = galleryData?.length || 0;
+      const pendingGallery =
+        galleryData?.filter((item) => !item.approved).length || 0;
+
+      // Fetch guestbook stats from Supabase
+      const { count: guestbookCount, error: guestbookError } = await supabase
+        .from("guestbook")
+        .select("*", { count: "exact", head: true });
+
+      if (guestbookError) throw guestbookError;
 
       setStats({
-        students: Array.isArray(studentsData) ? studentsData.length : 0,
-        teachers: Array.isArray(teachersData) ? teachersData.length : 0,
-        memories: memoriesTotal,
-        sharedGallery: Array.isArray(sharedGalleryData)
-          ? sharedGalleryData.length
-          : 0,
-        guestbook: Array.isArray(guestbookData) ? guestbookData.length : 0,
+        sharedGallery: totalGallery,
+        guestbook: guestbookCount || 0,
+        pendingGallery: pendingGallery,
       });
     } catch (error) {
       console.error("Failed to load dashboard stats:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,13 +95,9 @@ export default function AdminPage() {
   }
 
   const tabs = [
-    { id: "overview" as Tab, label: "Overview", icon: Users },
-    { id: "students" as Tab, label: "Students", icon: Users },
-    { id: "teachers" as Tab, label: "Teachers", icon: Users },
-    { id: "memories" as Tab, label: "Memories", icon: ImageIcon },
+    { id: "overview" as Tab, label: "Overview", icon: LayoutDashboard },
     { id: "shared-gallery" as Tab, label: "Gallery", icon: ImageIcon },
     { id: "guestbook" as Tab, label: "Guestbook", icon: MessageSquare },
-    { id: "settings" as Tab, label: "Settings", icon: Settings },
   ];
 
   return (
@@ -143,7 +110,7 @@ export default function AdminPage() {
               Admin <span className="text-red-500">Dashboard</span>
             </h1>
             <p className="text-gray-400 text-sm">
-              Manage graduation content & memories
+              Manage gallery & guestbook content
             </p>
           </div>
 
@@ -191,22 +158,62 @@ export default function AdminPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6"
+            className="space-y-6"
           >
-            <StatCard label="Students" value={stats.students.toString()} />
-            <StatCard label="Teachers" value={stats.teachers.toString()} />
-            <StatCard label="Memories" value={stats.memories.toString()} />
-            <StatCard label="Gallery" value={stats.sharedGallery.toString()} />
-            <StatCard label="Guestbook" value={stats.guestbook.toString()} />
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white/5 border border-white/10 rounded-2xl p-6 animate-pulse"
+                  >
+                    <div className="h-4 bg-white/10 rounded w-20 mb-2" />
+                    <div className="h-10 bg-white/10 rounded w-16" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <StatCard
+                  label="Total Gallery Items"
+                  value={stats.sharedGallery.toString()}
+                  subtext={`${stats.pendingGallery} pending approval`}
+                />
+                <StatCard
+                  label="Guestbook Entries"
+                  value={stats.guestbook.toString()}
+                />
+                <StatCard
+                  label="Pending Approval"
+                  value={stats.pendingGallery.toString()}
+                  subtext="Awaiting your review"
+                  highlight
+                />
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+              <QuickActionCard
+                title="Manage Gallery"
+                description="Approve, edit, or delete uploaded memories"
+                icon={ImageIcon}
+                onClick={() => setActiveTab("shared-gallery")}
+                color="from-purple-500 to-pink-500"
+              />
+              <QuickActionCard
+                title="Manage Guestbook"
+                description="View and manage guestbook messages"
+                icon={MessageSquare}
+                onClick={() => setActiveTab("guestbook")}
+                color="from-blue-500 to-cyan-500"
+              />
+            </div>
           </motion.div>
         )}
 
-        {activeTab === "students" && <AdminStudents />}
-        {activeTab === "teachers" && <AdminTeachers />}
-        {activeTab === "memories" && <AdminMemories />}
         {activeTab === "shared-gallery" && <AdminSharedGallery />}
         {activeTab === "guestbook" && <AdminGuestbook />}
-        {activeTab === "settings" && <AdminSettings />}
       </div>
 
       {/* FOOTER */}
@@ -216,14 +223,73 @@ export default function AdminPage() {
 }
 
 /* STATS CARD */
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  subtext,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  subtext?: string;
+  highlight?: boolean;
+}) {
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
-      className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md hover:border-red-500/30 transition-all"
+      className={`bg-white/5 border rounded-2xl p-6 backdrop-blur-md transition-all ${
+        highlight
+          ? "border-yellow-500/30 hover:border-yellow-500/50"
+          : "border-white/10 hover:border-red-500/30"
+      }`}
     >
       <p className="text-gray-400 text-sm mb-2">{label}</p>
-      <p className="text-4xl font-bold text-red-500">{value}</p>
+      <p
+        className={`text-4xl font-bold ${
+          highlight ? "text-yellow-400" : "text-red-500"
+        }`}
+      >
+        {value}
+      </p>
+      {subtext && <p className="text-xs text-gray-500 mt-2">{subtext}</p>}
+    </motion.div>
+  );
+}
+
+/* QUICK ACTION CARD */
+function QuickActionCard({
+  title,
+  description,
+  icon: Icon,
+  onClick,
+  color,
+}: {
+  title: string;
+  description: string;
+  icon: any;
+  onClick: () => void;
+  color: string;
+}) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      onClick={onClick}
+      className={`bg-gradient-to-r ${color} p-0.5 rounded-2xl cursor-pointer`}
+    >
+      <div className="bg-black/90 backdrop-blur-xl rounded-2xl p-6 h-full transition-all hover:bg-black/70">
+        <div className="flex items-start gap-4">
+          <div className={`p-3 rounded-xl bg-gradient-to-r ${color}/20`}>
+            <Icon className="text-white" size={24} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-white font-semibold text-lg">{title}</h3>
+            <p className="text-gray-400 text-sm mt-1">{description}</p>
+            <div className="mt-3 text-sm text-white/60 flex items-center gap-1">
+              Click to manage →
+            </div>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 }

@@ -1,3 +1,4 @@
+// components/UploadMemory.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 
+// Notification component
 interface NotificationProps {
   message: string;
   type: "success" | "error";
@@ -50,8 +52,10 @@ function Notification({ message, type, onClose }: NotificationProps) {
 
 export default function UploadMemory({
   onUploaded,
+  onUploadStart,
 }: {
   onUploaded: () => void;
+  onUploadStart?: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
@@ -72,8 +76,11 @@ export default function UploadMemory({
     type: "success" | "error";
   }>({ show: false, message: "", type: "success" });
 
+  // Check if upload was previously submitted in this session only
   useEffect(() => {
-    const wasSubmitted = localStorage.getItem("uploadSubmitted");
+    // Use sessionStorage instead of localStorage
+    // sessionStorage clears when the browser tab is closed
+    const wasSubmitted = sessionStorage.getItem("uploadSubmitted");
     if (wasSubmitted === "true") {
       setIsSubmitted(true);
       setIsExpanded(false);
@@ -91,7 +98,7 @@ export default function UploadMemory({
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    const maxSize = 100 * 1024 * 1024; // 100MB
+    const maxSize = 100 * 1024 * 1024;
     if (selectedFile.size > maxSize) {
       showNotification(
         `File too large (${(selectedFile.size / (1024 * 1024)).toFixed(1)}MB). Maximum size is 100MB.`,
@@ -116,13 +123,19 @@ export default function UploadMemory({
       return;
     }
 
+    // Call onUploadStart if provided
+    if (onUploadStart) {
+      onUploadStart();
+    }
+
     setLoading(true);
     setUploadProgress(0);
 
     const form = new FormData();
     form.append("file", file);
-    form.append("caption", caption);
+    form.append("caption", caption.trim());
     form.append("studentId", "1");
+    form.append("day", "Shared Memory");
 
     // Simulate upload progress
     const progressInterval = setInterval(() => {
@@ -150,7 +163,6 @@ export default function UploadMemory({
         throw new Error(result.error || "Upload failed");
       }
 
-      // Display compression info if available
       if (result.compressionInfo) {
         setCompressionInfo(result.compressionInfo);
         showNotification(
@@ -164,11 +176,14 @@ export default function UploadMemory({
         );
       }
 
+      // Show success component
       setIsSubmitted(true);
       setIsExpanded(false);
-      localStorage.setItem("uploadSubmitted", "true");
 
-      // Reset form
+      // Store in sessionStorage (clears when tab is closed)
+      sessionStorage.setItem("uploadSubmitted", "true");
+
+      // Reset form fields but keep success state
       setFile(null);
       setCaption("");
       setOriginalSize(null);
@@ -197,9 +212,11 @@ export default function UploadMemory({
   }
 
   const handleNewUpload = () => {
+    // Reset everything for a new upload
     setIsSubmitted(false);
     setIsExpanded(true);
-    localStorage.removeItem("uploadSubmitted");
+    // Remove from sessionStorage so it doesn't persist
+    sessionStorage.removeItem("uploadSubmitted");
     setFile(null);
     setCaption("");
     setOriginalSize(null);
@@ -280,7 +297,6 @@ export default function UploadMemory({
                       />
                     </label>
 
-                    {/* Show original file size */}
                     {originalSize && !compressionInfo && (
                       <div className="mt-2 text-xs text-gray-400 flex items-center gap-2">
                         {file?.type.startsWith("image/") ? (
@@ -294,7 +310,6 @@ export default function UploadMemory({
                       </div>
                     )}
 
-                    {/* Show compression info from server */}
                     {compressionInfo && (
                       <div className="mt-2 text-xs text-green-400 flex items-center gap-2 bg-green-400/10 p-2 rounded-lg">
                         {file?.type.startsWith("image/") ? (
@@ -308,7 +323,7 @@ export default function UploadMemory({
                           </span>
                           <div className="text-green-300">
                             {compressionInfo.originalSize} →{" "}
-                            {compressionInfo.compressedSize}(
+                            {compressionInfo.compressedSize} (
                             {compressionInfo.savings} saved)
                           </div>
                           <div className="text-yellow-300 text-xs">
@@ -318,7 +333,6 @@ export default function UploadMemory({
                       </div>
                     )}
 
-                    {/* Upload Progress */}
                     {loading && uploadProgress > 0 && uploadProgress < 100 && (
                       <div className="mt-3 space-y-2">
                         <div className="flex justify-between text-xs text-gray-400">
@@ -353,9 +367,13 @@ export default function UploadMemory({
                         Uploading... {uploadProgress}%
                       </div>
                     ) : (
-                      "Upload (Server Optimized)"
+                      "Upload to Gallery"
                     )}
                   </button>
+
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    All uploads require admin approval before being published
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -5,7 +5,19 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    qualities: [75, 95], // Add this line
+    qualities: [75, 95],
+  },
+  // Add this to handle sharp on Vercel
+  experimental: {
+    serverComponentsExternalPackages: ["sharp"],
+  },
+  // Webpack configuration for sharp
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Ensure sharp is properly bundled
+      config.externals = [...(config.externals || []), "sharp"];
+    }
+    return config;
   },
 };
 

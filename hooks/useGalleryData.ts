@@ -1,6 +1,6 @@
 // hooks/useGalleryData.ts
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export interface GalleryItem {
   id: number;
@@ -21,6 +21,15 @@ export function useGalleryData(initialApproved: boolean = true) {
   const fetchGallery = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    // Check if Supabase is configured
+    if (!isSupabaseConfigured) {
+      setError(
+        "Supabase is not configured. Please check environment variables.",
+      );
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -55,6 +64,9 @@ export function useGalleryData(initialApproved: boolean = true) {
   useEffect(() => {
     fetchGallery();
 
+    // Only subscribe if Supabase is configured
+    if (!isSupabaseConfigured) return;
+
     const channel = supabase
       .channel("gallery-changes")
       .on(
@@ -65,7 +77,6 @@ export function useGalleryData(initialApproved: boolean = true) {
           table: "gallery",
         },
         (payload) => {
-          // Refresh gallery when changes occur
           fetchGallery();
         },
       )

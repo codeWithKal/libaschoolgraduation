@@ -468,11 +468,12 @@ export default function TeachersPage() {
                 Faculty
               </span>
             </h1>
-
-            <p className="max-w-3xl text-lg md:text-xl text-neutral-400 leading-relaxed">
-              Get to know the dedicated educators who have shaped the NOVAREING
-              batch and contributed to their success.
-            </p>
+            <div className="border border-white p-6 md:p-8 rounded-lg max-w-3xl mb-12">
+              <p className="max-w-3xl text-lg md:text-xl text-neutral-400 leading-relaxed">
+                Get to know the dedicated educators who have shaped the
+                NOVAREING batch and contributed to their success.
+              </p>
+            </div>
 
             {/* Stats Bar */}
             <div className="flex flex-wrap items-center gap-4 mt-8">

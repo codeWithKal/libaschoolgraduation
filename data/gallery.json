@@ -4,7 +4,6 @@
     "type": "image",
     "url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&h=600&fit=crop",
     "caption": "Group photo from Gabi Day",
-    "studentId": 1,
     "approved": true
   },
   {
@@ -12,7 +11,6 @@
     "type": "video",
     "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
     "caption": "Gabi Day highlights reel",
-    "studentId": 2,
     "approved": true
   },
   {
@@ -20,7 +18,6 @@
     "type": "image",
     "url": "https://images.unsplash.com/photo-1493244040629-496f6d136cc3?w=800&h=600&fit=crop",
     "caption": "Friends sharing the Gabi Day feast",
-    "studentId": 3,
     "approved": true
   },
   {
@@ -28,7 +25,6 @@
     "type": "image",
     "url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=600&fit=crop",
     "caption": "Photoshoot Day color fights",
-    "studentId": 4,
     "approved": true
   },
   {
@@ -36,7 +32,6 @@
     "type": "video",
     "url": "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
     "caption": "Photoshoot Day jam session",
-    "studentId": 5,
     "approved": true
   },
   {
@@ -44,7 +39,6 @@
     "type": "image",
     "url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&h=600&fit=crop&blend=ff0000",
     "caption": "Pranks and fun on Photoshoot Day",
-    "studentId": 6,
     "approved": true
   },
   {
@@ -52,7 +46,6 @@
     "type": "image",
     "url": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd17f?w=800&h=600&fit=crop",
     "caption": "Welcome Day road trip squad",
-    "studentId": 7,
     "approved": true
   },
   {
@@ -60,7 +53,6 @@
     "type": "video",
     "url": "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
     "caption": "Welcome Day sunset skate video",
-    "studentId": 8,
     "approved": true
   },
   {
@@ -68,14 +60,12 @@
     "type": "image",
     "url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&h=600&fit=crop",
     "caption": "Campfire stories from Welcome Day",
-    "studentId": 9,
     "approved": true
   },
   {
     "id": 1778679487065,
     "type": "image",
     "caption": "crsger",
-    "studentId": 1,
     "url": "/images/gallery/1778679487064-crusher1.jpg",
     "approved": true
   },
@@ -84,7 +74,6 @@
     "type": "image",
     "url": "/images/gallery/1778842070157-159-cybersecurity-certificate-kaleab-shiferaw-girma.png",
     "caption": "Cyber",
-    "studentId": 1,
     "approved": true
   }
 ]

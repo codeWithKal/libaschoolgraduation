@@ -464,16 +464,17 @@ export default function MemoriesPage() {
               style={{ fontFamily: "var(--font-elegant)" }}
               className="text-5xl md:text-7xl font-black text-white leading-tight mb-6"
             >
-              Shared
+              Shared Timeless
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-netflix-red">
                 Memories
               </span>
             </h1>
-
-            <p className="max-w-3xl text-lg md:text-xl text-netflix-lightgray leading-relaxed">
-              Relive unforgettable graduation moments, celebrations, trips, and
-              experiences shared by the NOVAREING batch.
-            </p>
+            <div className="border border-white p-6 md:p-8 rounded-lg max-w-3xl mb-12">
+              <p className="max-w-3xl text-lg md:text-xl text-netflix-lightgray leading-relaxed">
+                Every photo tells a story, every smile holds a memory. Welcome
+                to the moments that made the NOVAREING batch unforgettable.
+              </p>
+            </div>
 
             <div className="flex flex-wrap items-center gap-4 mt-8">
               <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">

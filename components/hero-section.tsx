@@ -132,18 +132,21 @@ export default function HeroSection() {
               style={{ fontFamily: "var(--font-display)" }}
               className="text-5xl text-center sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] text-white mb-8"
             >
-              {eventData.title}
+              One Last Chapter
               <span className="block mt-4 text-transparent bg-clip-text bg-gradient-to-r from-netflix-yellow via-yellow-400 to-yellow-300">
-                Graduation Ceremony
+                A Night to Remember
               </span>
             </h1>
 
             {/* DESCRIPTION */}
-            <p className="text-lg md:text-xl text-netflix-lightgray leading-relaxed max-w-3xl mb-12">
-              Celebrate the extraordinary journey of the NOVAREING graduating
-              class. Discover student stories, relive unforgettable memories,
-              and join a night filled with pride, friendship, and achievement.
-            </p>
+            <div className="border border-white p-6 md:p-8 rounded-lg max-w-3xl mb-12">
+              <p className="text-lg md:text-xl text-netflix-lightgray leading-relaxed">
+                Every ending marks the beginning of something greater. Explore
+                our stories, relive unforgettable moments, and celebrate the
+                friendships, achievements, and memories that will stay with us
+                forever.
+              </p>
+            </div>
 
             {/* EVENT CARDS */}
             <div className="grid md:grid-cols-2 gap-6 mb-12">
@@ -192,56 +195,123 @@ export default function HeroSection() {
             <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-2xl p-8 md:p-10 mb-12 shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-r from-netflix-red/10 via-transparent to-yellow-500/10" />
               <div className="relative">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
-                  <div>
-                    <p className="text-netflix-red text-xs uppercase tracking-[0.25em] font-bold mb-3">
-                      {isAfterGraduation
-                        ? "5-Year Reunion Countdown"
-                        : "Countdown To Graduation"}
-                    </p>
-                    <h2 className="text-3xl md:text-4xl font-black text-white">
-                      {isAfterGraduation
-                        ? "See You Again Soon"
-                        : "The Journey Begins"}
-                    </h2>
-                  </div>
-                  <div className="text-netflix-lightgray text-sm max-w-sm">
-                    {isAfterGraduation
-                      ? "Until the first NOVAREING reunion celebration."
-                      : "Every second brings us closer to an unforgettable celebration."}
-                  </div>
+                {/* Header */}
+                <div className="text-center">
+                  <p className="text-netflix-red text-xs uppercase tracking-[0.25em] font-bold mb-2">
+                    NOVAREING
+                  </p>
+                  <h2 className="text-3xl md:text-4xl font-black text-white">
+                    COUNTDOWN TO GRADUATION
+                  </h2>
+                  <p className="text-netflix-lightgray text-sm mt-3">
+                    The Journey Begins
+                  </p>
+                  <p className="text-netflix-lightgray text-sm mt-1">
+                    Time is flying — our moment is getting closer.
+                  </p>
+                </div>
+
+                {/* Graduation Cape Underline */}
+                <div className="flex items-center justify-center text-yellow-400 gap-4 my-6">
+                  <div className="h-[2px] flex-1 max-w-20 bg-yellow-400" />
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-netflix-lightgray/50"
+                  >
+                    <path
+                      d="M12 3L1 9L12 15L23 9L12 3Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M5 11V16.5C5 17.8807 8.13401 19 12 19C15.866 19 19 17.8807 19 16.5V11"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M19 11V15"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div className="h-[2px] flex-1 max-w-20 bg-yellow-400" />
                 </div>
 
                 {/* TIMER */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                <div className="grid text-yellow-400 grid-cols-2 md:grid-cols-4 gap-5 max-w-3xl mx-auto">
                   {[
-                    { label: "Days", value: countdown.days },
-                    { label: "Hours", value: countdown.hours },
-                    { label: "Minutes", value: countdown.minutes },
-                    { label: "Seconds", value: countdown.seconds },
+                    { label: "DAYS", value: countdown.days },
+                    { label: "HOURS", value: countdown.hours },
+                    { label: "MINUTES", value: countdown.minutes },
+                    { label: "SECONDS", value: countdown.seconds },
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="group rounded-3xl border border-white/10 bg-black/30 p-6 text-center hover:border-netflix-red/40 transition-all duration-300"
+                      className="rounded-3xl border border-white/10 bg-black/30 p-6 text-center"
                     >
-                      <div className="text-5xl md:text-6xl font-black text-white mb-3 group-hover:scale-105 transition-transform">
+                      <div className="text-5xl md:text-6xl font-black text-white">
                         {String(item.value).padStart(2, "0")}
                       </div>
-                      <div className="text-netflix-lightgray uppercase tracking-[0.2em] text-xs font-semibold">
+                      <div className="text-netflix-red text-xs tracking-[0.2em] font-bold mt-1">
                         {item.label}
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {isAfterGraduation && (
-                  <div className="mt-8 pt-6 border-t border-white/10 text-center">
-                    <p className="text-yellow-400 font-medium italic">
-                      First reunion celebration on July 25, 2031 — reconnect,
-                      remember, and celebrate together.
-                    </p>
-                  </div>
-                )}
+                {/* Bottom text */}
+                <div className="text-center mt-8">
+                  <p className="text-netflix-lightgray text-sm">
+                    New chapter. Same bond. Greater future.
+                  </p>
+                  <p className="text-yellow-400 font-semibold text-sm mt-0.5">
+                    We're almost there.
+                  </p>
+                </div>
+                <div className="flex items-center justify-center text-yellow-400 gap-4 my-6">
+                  <div className="h-[2px] flex-1 max-w-20 bg-yellow-400" />
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-netflix-lightgray/50"
+                  >
+                    <path
+                      d="M12 3L1 9L12 15L23 9L12 3Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M5 11V16.5C5 17.8807 8.13401 19 12 19C15.866 19 19 17.8807 19 16.5V11"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M19 11V15"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div className="h-[2px] flex-1 max-w-20 bg-yellow-400" />
+                </div>
               </div>
             </div>
 

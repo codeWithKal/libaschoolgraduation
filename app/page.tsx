@@ -463,16 +463,16 @@ export default function Home() {
                 </div>
 
                 <h3 className="text-3xl md:text-4xl font-black text-white mb-3 group-hover:text-yellow-300 transition duration-500">
-                  Browse Students
+                  The People Who Made It Special
                 </h3>
 
                 <p className="text-netflix-lightgray text-base md:text-lg max-w-md leading-relaxed mb-6">
-                  Explore profiles, achievements, and memories of the graduating
-                  class.
+                  More than classmates, We're a family of dreamers, leaders, and
+                  lifelong friends.
                 </p>
 
                 <div className="flex items-center gap-3 text-yellow-300 font-semibold text-lg">
-                  Explore Profiles
+                  Explore the Class
                   <span className="group-hover:translate-x-1 transition-transform duration-300">
                     →
                   </span>
@@ -546,16 +546,16 @@ export default function Home() {
                 </div>
 
                 <h3 className="text-3xl md:text-4xl font-black text-white mb-3 group-hover:text-netflix-red transition duration-500">
-                  Shared Memories
+                  Our Story in Pictures
                 </h3>
 
                 <p className="text-netflix-lightgray text-base md:text-lg max-w-md leading-relaxed mb-6">
-                  Relive graduation moments, celebrations, trips, and
-                  unforgettable experiences.
+                  From ordinary school days to extraordinary milestones-relive
+                  every unforgettable moment.
                 </p>
 
                 <div className="flex items-center gap-3 text-netflix-red font-semibold text-lg">
-                  View Gallery
+                  Browse Gallery
                   <span className="group-hover:translate-x-1 transition-transform duration-300">
                     →
                   </span>

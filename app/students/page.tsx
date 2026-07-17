@@ -363,7 +363,7 @@ export default function StudentsPage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-sm font-medium mb-6">
               <Sparkles size={16} />
-              Graduation Directory
+              Class Directory
             </div>
 
             {/* Title */}
@@ -379,15 +379,18 @@ export default function StudentsPage() {
             >
               NOVAREING
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600">
-                Batch 2026
+                The People Behind the Legacy
               </span>
             </h1>
 
             {/* Description */}
-            <p className="max-w-3xl text-lg md:text-xl text-netflix-lightgray leading-relaxed">
-              Browse the graduating class, discover student profiles, and
-              celebrate the achievements of the NOVAREING batch.
-            </p>
+            <div className="border border-white p-6 md:p-8 rounded-lg max-w-3xl">
+              <p className="text-lg md:text-xl text-netflix-lightgray leading-relaxed">
+                Every student has a story worth telling. Discover the faces,
+                achievements, and unforgettable moments that shaped the
+                NOVAREING Class of 2026.
+              </p>
+            </div>
 
             {/* Stats */}
             <div className="flex items-center gap-4 mt-8">

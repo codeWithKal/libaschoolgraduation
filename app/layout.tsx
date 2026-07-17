@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { AudioProvider } from "@/components/AudioProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -46,7 +47,7 @@ export default function RootLayout({
             "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
         }}
       >
-        {children}
+        <AudioProvider>{children}</AudioProvider>
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>

@@ -160,21 +160,38 @@ export default function Home() {
     fetchStudentPhotos();
   }, []);
 
-  // Fetch random memories from Gabi Day and Welcome Day
+  // Fetch random memories from ALL day files
   useEffect(() => {
     async function fetchMemoryPhotos() {
       try {
-        const [gabiResponse, welcomeResponse] = await Promise.all([
+        const [
+          gabiResponse,
+          welcomeResponse,
+          photoshootResponse,
+          entranceVibeResponse,
+          jerseyResponse,
+        ] = await Promise.all([
           fetch("/api/data/gabi_day.json"),
           fetch("/api/data/welcome_day.json"),
+          fetch("/api/data/photoshot_day.json"),
+          fetch("/api/data/entrance_vibe_day.json"),
+          fetch("/api/data/jersey_day.json"),
         ]);
 
         const gabiMemories: Memory[] = await gabiResponse.json();
         const welcomeMemories: Memory[] = await welcomeResponse.json();
+        const photoshootMemories: Memory[] = await photoshootResponse.json();
+        const entranceVibeMemories: Memory[] =
+          await entranceVibeResponse.json();
+        const jerseyMemories: Memory[] = await jerseyResponse.json();
 
-        const allMemories = [...gabiMemories, ...welcomeMemories].filter(
-          (m) => m.type === "image" && m.url,
-        );
+        const allMemories = [
+          ...gabiMemories,
+          ...welcomeMemories,
+          ...photoshootMemories,
+          ...entranceVibeMemories,
+          ...jerseyMemories,
+        ].filter((m) => m.type === "image" && m.url);
 
         const shuffled = [...allMemories].sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, 8);
@@ -579,6 +596,112 @@ export default function Home() {
 
       <HeroSection />
 
+      {/* 👨‍🏫 PRINCIPAL'S MESSAGE SECTION */}
+      <section className="relative px-4 md:px-8 py-16 max-w-7xl mx-auto z-10">
+        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-black via-zinc-900/80 to-black border border-yellow-500/20 p-6 md:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
+          {/* Background glow */}
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-500/5 blur-3xl rounded-full" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-500/5 blur-3xl rounded-full" />
+
+          <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-12 items-center">
+            {/* Text content - left side */}
+            <div className="flex-1 space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs font-bold uppercase tracking-[0.2em]">
+                🎓 A Message From Highschool Principal
+              </div>
+
+              <h3 className="text-2xl md:text-4xl font-black text-white leading-tight">
+                To Our Amazing Grade 12 Students
+              </h3>
+
+              <div className="space-y-3 text-netflix-lightgray text-sm md:text-base leading-relaxed max-w-3xl">
+                <p>
+                  <span className="text-yellow-300 font-semibold">Wow!</span>{" "}
+                  You've made it. And what an incredible journey it's been! I've
+                  watched you all grow, learn, and tackle challenges in ways
+                  that inspire me every single day. Whether it was passing that
+                  last minute project, laughing through the stress, or pushing
+                  yourselves beyond what you thought was possible, you did it.
+                  And today, as you stand at the edge of this new chapter, I
+                  want to remind you of one thing:{" "}
+                  <span className="text-white font-semibold">
+                    This is just the beginning.
+                  </span>
+                </p>
+
+                <p>
+                  Sure, Grade 12 completion is a huge milestone, but it is not
+                  the end. It's the start of a whole new adventure—one filled
+                  with possibilities, challenges, and opportunities to chase
+                  your dreams. Whether you are heading to university, jumping
+                  straight into work, taking a gap year, or exploring the
+                  unknown, remember this:{" "}
+                  <span className="text-white font-semibold">
+                    the world is yours to shape.
+                  </span>
+                </p>
+
+                <p>
+                  You have everything it takes to succeed, but success isn't
+                  just about grades or achievements; it's about the courage to
+                  try, the kindness to lift others, and the passion to never
+                  stop learning. So, keep being curious, stay true to
+                  yourselves, and don't be afraid to stumble along the way.
+                  Every step is part of the journey. As you take that first step
+                  into the world beyond high school, I hope you carry with you
+                  the lessons, memories, and friendships that will fuel your
+                  growth.{" "}
+                  <span className="text-yellow-300 font-semibold">
+                    The best is yet to come!
+                  </span>
+                </p>
+
+                <p className="text-white font-semibold text-base md:text-lg pt-2">
+                  Now, go out there and own your future. We are all rooting for
+                  you. You've got this!
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <div className="h-px flex-1 bg-gradient-to-r from-yellow-500/20 to-transparent" />
+                <p className="text-yellow-300 font-bold text-sm md:text-base italic">
+                  With pride and excitement,
+                </p>
+                <div className="h-px flex-1 bg-gradient-to-l from-yellow-500/20 to-transparent" />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
+                  <span className="text-yellow-300 text-xl">✍️</span>
+                </div>
+                <div>
+                  <p className="text-white font-bold text-lg">
+                    Mr. Chali Abate
+                  </p>
+                  <p className="text-netflix-lightgray text-sm">
+                    Principal, LIBA highschool
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Principal Image - right side */}
+            <div className="flex-shrink-0">
+              <div className="relative w-48 h-48 md:w-64 md:h-64 lg:w-72 lg:h-72 rounded-2xl overflow-hidden border-2 border-yellow-500/30 shadow-[0_10px_40px_rgba(250,204,21,0.15)] group-hover:shadow-[0_10px_60px_rgba(250,204,21,0.25)] transition-all duration-500">
+                <Image
+                  src="/images/teachers/chali.jpg"
+                  alt="Principal Abel"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 192px, (max-width: 1024px) 256px, 288px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 🃏 FEATURED SECTION */}
       <section className="relative px-4 md:px-8 py-24 max-w-7xl mx-auto z-10">
         {/* Background Glow */}
@@ -753,7 +876,7 @@ export default function Home() {
                 </h3>
 
                 <p className="text-netflix-lightgray text-base md:text-lg max-w-md leading-relaxed mb-6">
-                  From ordinary school days to extraordinary milestones-relive
+                  From ordinary school days to extraordinary milestones—relive
                   every unforgettable moment.
                 </p>
 

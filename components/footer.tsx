@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Mail, Phone, MapPin } from "lucide-react";
+import { Heart, Mail, Phone, MapPin, Calendar, Sparkles } from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -134,6 +134,67 @@ export default function Footer() {
                 <p className="text-netflix-lightgray text-sm">
                   Central Convention Center
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* NEW: Your Event, Beautifully Organized Section */}
+        <div className="mb-12 bg-gradient-to-br from-netflix-red/5 to-netflix-red/10 border border-netflix-red/20 rounded-2xl p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-netflix-red/20 flex items-center justify-center">
+                <Sparkles className="w-7 h-7 text-netflix-red" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h4
+                style={{ fontFamily: "var(--font-display)" }}
+                className="text-2xl font-bold text-white mb-2"
+              >
+                Your Event, Beautifully Organized
+              </h4>
+              <p className="text-netflix-lightgray text-sm md:text-base">
+                From graduation websites to yearbooks and event management—we've
+                got you covered.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-netflix-red/10">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h5 className="text-netflix-red font-semibold text-sm mb-1">
+                  Get in Touch Today
+                </h5>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm">
+                  <span className="text-netflix-lightgray flex items-center gap-2">
+                    <span className="text-netflix-red">📲</span> Telegram:{" "}
+                    <a
+                      href="https://t.me/leo_estif"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-netflix-red hover:text-white transition underline"
+                    >
+                      @leo_estif
+                    </a>
+                  </span>
+                  <span className="text-netflix-lightgray flex items-center gap-2">
+                    <span className="text-netflix-red">📞</span>{" "}
+                    <a
+                      href="tel:+251995055266"
+                      className="text-netflix-red hover:text-white transition underline"
+                    >
+                      +251 995 055 266
+                    </a>
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-netflix-red/10 px-4 py-2 rounded-full border border-netflix-red/20">
+                <Calendar className="w-4 h-4 text-netflix-red" />
+                <span className="text-netflix-lightgray text-xs">
+                  Let's Make Your Event Unforgettable
+                </span>
               </div>
             </div>
           </div>

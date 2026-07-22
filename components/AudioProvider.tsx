@@ -17,7 +17,6 @@ import {
   SkipBack,
   Music,
   X,
-  AlignLeft,
 } from "lucide-react";
 
 interface AudioContextType {
@@ -35,9 +34,7 @@ interface AudioContextType {
   showController: boolean;
   toggleController: () => void;
   closeController: () => void;
-  showLyrics: boolean;
-  toggleLyrics: () => void;
-  currentLyric: string;
+  currentImage: string;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -54,65 +51,282 @@ interface AudioProviderProps {
   children: ReactNode;
 }
 
-// Lyrics data with timestamps (in seconds) - Amharic lyrics
-const lyricsData = [
-  { time: 12.72, text: "ዓይኔ ላይ ነው" },
-  { time: 14.62, text: "ዓይኔ ላይ ነው" },
-  { time: 18.58, text: "መቼም አይረሳኝም" },
-  { time: 25.16, text: "ያ የሚያምረው ጊዜያችን የማይጠገበው" },
-  { time: 31.34, text: "ተነግሮ የማያልቀው" },
-  { time: 35.67, text: "ትዝታው ሁሌም የማይጠፋ" },
-  { time: 40.52, text: "ከኛው ጋር የሚኖር መቼም የማንረሳው" },
-  { time: 47.16, text: "ፍፁም ደስታችን ሳቅ ጨዋታችን ጓደኝነታችን" },
-  { time: 55.58, text: "ያ ንጹህ ጣፋጭ ፍቅራችን" },
-  { time: 58.46, text: "ሁሌም ሳስበው ለኔ ይገርመኛል" },
-  { time: 64.45, text: "ያ ልዩ ጊዜ ዛሬም ድረስ ይታወሰኛል" },
-  { time: 70.13, text: "ዓይኔ ላይ ነው" },
-  { time: 71.84, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 74.5, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 78.28, text: "መቼም አይረሳኝም አ አ አ" },
-  { time: 81.85, text: "ዓይኔ ላይ ነው" },
-  { time: 83.59, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 86.23, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 89.68, text: "መቼም አይረሳኝም አ አ አ" },
-  { time: 105.51, text: "ትዝታ መቼም ሃይለኛ ነው" },
-  { time: 120.96, text: "እሱ ሁሌም ሃይለኛ ነው" },
-  { time: 124.55, text: "ማን ያስቀረዋል" },
-  { time: 128.97, text: "ያለፈው ጊዜ መስታወት ሆኖ" },
-  { time: 133.02, text: "ዛሬ ላይ አምጥቶን ስንቱን ያሳያል" },
-  { time: 140.25, text: "ፍፁም ደስታችን ሳቅ ጨዋታችን ጓደኝነታችን" },
-  { time: 148.73, text: "ያ ንጹህ ጣፋጭ ፍቅራችን" },
-  { time: 151.82, text: "ሁሌም ሳስበው ለኔ ይገርመኛል" },
-  { time: 157.74, text: "ያ ልዩ ጊዜ ዛሬም ድረስ ይታወሰኛል" },
-  { time: 163.3, text: "ዓይኔ ላይ ነው" },
-  { time: 165.5, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 168.11, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 171.42, text: "መቼም አይረሳኝም አ አ አ" },
-  { time: 175.03, text: "ዓይኔ ላይ ነው" },
-  { time: 177.49, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 179.78, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 182.97, text: "መቼም አይረሳኝም አ አ አ" },
-  { time: 210.35, text: "ጊዜ ላይመለስ እየገሰገሰ" },
-  { time: 216.1, text: "ትዝታ ብቻዉን ይኸው ነገሠ" },
-  { time: 222.03, text: "ባለፈው ጊዜ ፍቅርን ዘርተናል" },
-  { time: 227.74, text: "ዛሬም ሳስታውሰው ደስ ይለኛል" },
-  { time: 233.76, text: "ዓይኔ ላይ ነው" },
-  { time: 235.59, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 238.18, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 241.4, text: "መቼም አይረሳኝም አ አ አ" },
-  { time: 245.29, text: "ዓይኔ ላይ ነው" },
-  { time: 247.46, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 250.14, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 253.69, text: "መቼም አይረሳኝም አ አ አ" },
-  { time: 257.19, text: "ዓይኔ ላይ ነው" },
-  { time: 259.43, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 262.1, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 265.37, text: "መቼም አይረሳኝም አ አ አ" },
-  { time: 268.89, text: "ዓይኔ ላይ ነው" },
-  { time: 270.97, text: "ያደረግነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 273.49, text: "የሆነው ሁሉ ዓይኔ ላይ ነው" },
-  { time: 277.14, text: "መቼም አይረሳኝም አ አ አ" },
+// All images from all day folders
+const allImages = [
+  // Gabi Day images
+  "/images/gabi_day/gabi9.jpg",
+  "/images/gabi_day/gabi10.jpg",
+  "/images/gabi_day/gabi11.jpg",
+  "/images/gabi_day/gabi12.jpg",
+  "/images/gabi_day/gabi13.jpg",
+  "/images/gabi_day/gabi14.jpg",
+  "/images/gabi_day/gabi15.jpg",
+  "/images/gabi_day/gabi16.jpg",
+  "/images/gabi_day/gabi17.jpg",
+  "/images/gabi_day/gabi18.jpg",
+  "/images/gabi_day/gabi19.jpg",
+  "/images/gabi_day/gabi21.jpg",
+  "/images/gabi_day/gabi22.jpg",
+  "/images/gabi_day/gabi23.jpg",
+  "/images/gabi_day/gabi24.jpg",
+  "/images/gabi_day/gabi25.jpg",
+  "/images/gabi_day/gabi26.jpg",
+  "/images/gabi_day/gabi27.jpg",
+  "/images/gabi_day/gabi28.jpg",
+  "/images/gabi_day/gabi29.jpg",
+  "/images/gabi_day/gabi30.jpg",
+  "/images/gabi_day/gabi31.jpg",
+  "/images/gabi_day/gabi32.jpg",
+  "/images/gabi_day/gabi33.jpg",
+  "/images/gabi_day/gabi34.jpg",
+  "/images/gabi_day/gabi35.jpg",
+  "/images/gabi_day/gabi36.jpg",
+  "/images/gabi_day/gabi37.jpg",
+  "/images/gabi_day/gabi38.jpg",
+  "/images/gabi_day/gabi39.jpg",
+  "/images/gabi_day/gabi41.jpg",
+  "/images/gabi_day/gabi42.jpg",
+  "/images/gabi_day/gabi43.jpg",
+  "/images/gabi_day/gabi44.jpg",
+  "/images/gabi_day/gabi45.jpg",
+  "/images/gabi_day/gabi46.jpg",
+  "/images/gabi_day/gabi47.jpg",
+  "/images/gabi_day/gabi48.jpg",
+  "/images/gabi_day/gabi49.jpg",
+  "/images/gabi_day/gabi50.jpg",
+  "/images/gabi_day/gabi51.jpg",
+  "/images/gabi_day/gabi52.jpg",
+  "/images/gabi_day/gabi53.jpg",
+  "/images/gabi_day/gabi54.jpg",
+  "/images/gabi_day/gabi55.jpg",
+  "/images/gabi_day/gabi56.jpg",
+  "/images/gabi_day/gabi57.jpg",
+  "/images/gabi_day/gabi58.jpg",
+  "/images/gabi_day/gabi59.jpg",
+  "/images/gabi_day/gabi60.jpg",
+  "/images/gabi_day/gabi61.jpg",
+  "/images/gabi_day/gabi62.jpg",
+  "/images/gabi_day/gabi63.jpg",
+  "/images/gabi_day/gabi64.jpg",
+  "/images/gabi_day/gabi65.jpg",
+  "/images/gabi_day/gabi66.jpg",
+  "/images/gabi_day/gabi67.jpg",
+  "/images/gabi_day/gabi68.jpg",
+  "/images/gabi_day/gabi69.jpg",
+  "/images/gabi_day/gabi70.jpg",
+  "/images/gabi_day/gabi71.jpg",
+  "/images/gabi_day/gabi72.jpg",
+  "/images/gabi_day/gabi73.jpg",
+  "/images/gabi_day/gabi74.jpg",
+  "/images/gabi_day/gabi75.jpg",
+  "/images/gabi_day/gabi76.jpg",
+  "/images/gabi_day/gabi77.jpg",
+  "/images/gabi_day/gabi78.jpg",
+  "/images/gabi_day/gabi79.jpg",
+  "/images/gabi_day/gabi80.jpg",
+  "/images/gabi_day/gabi81.jpg",
+  "/images/gabi_day/gabi82.jpg",
+  "/images/gabi_day/gabi83.jpg",
+  "/images/gabi_day/gabi84.jpg",
+  "/images/gabi_day/gabi85.jpg",
+  "/images/gabi_day/gabi86.jpg",
+  "/images/gabi_day/gabi87.jpg",
+  "/images/gabi_day/gabi88.jpg",
+  "/images/gabi_day/gabi89.jpg",
+  "/images/gabi_day/gabi90.jpg",
+  "/images/gabi_day/gabi91.jpg",
+  "/images/gabi_day/gabi92.jpg",
+  "/images/gabi_day/gabi93.jpg",
+  "/images/gabi_day/gabi94.jpg",
+  "/images/gabi_day/gabi95.jpg",
+  "/images/gabi_day/gabi96.jpg",
+  "/images/gabi_day/gabi97.jpg",
+  "/images/gabi_day/gabi99.jpg",
+  "/images/gabi_day/gabi100.jpg",
+  "/images/gabi_day/gabi101.jpg",
+  "/images/gabi_day/gabi102.jpg",
+  "/images/gabi_day/gabi103.jpg",
+  "/images/gabi_day/gabi104.jpg",
+  "/images/gabi_day/gabi105.jpg",
+  "/images/gabi_day/gabi106.jpg",
+  "/images/gabi_day/gabi107.jpg",
+  "/images/gabi_day/gabi108.jpg",
+  "/images/gabi_day/gabi109.jpg",
+  "/images/gabi_day/gabi110.jpg",
+  "/images/gabi_day/gabi111.jpg",
+  "/images/gabi_day/gabi112.jpg",
+  "/images/gabi_day/gabi113.jpg",
+  "/images/gabi_day/gabi114.jpg",
+  "/images/gabi_day/gabi115.jpg",
+  "/images/gabi_day/gabi116.jpg",
+  "/images/gabi_day/gabi117.jpg",
+  "/images/gabi_day/gabi118.jpg",
+  "/images/gabi_day/gabi119.jpg",
+  "/images/gabi_day/gabi120.jpg",
+  "/images/gabi_day/gabi121.jpg",
+  "/images/gabi_day/gabi122.jpg",
+  "/images/gabi_day/gabi123.jpg",
+  "/images/gabi_day/gabi124.jpg",
+  "/images/gabi_day/gabi125.jpg",
+  "/images/gabi_day/gabi126.jpg",
+  "/images/gabi_day/gabi127.jpg",
+  "/images/gabi_day/gabi128.jpg",
+  "/images/gabi_day/gabi129.jpg",
+  "/images/gabi_day/gabi130.jpg",
+  "/images/gabi_day/gabi131.jpg",
+  "/images/gabi_day/gabi132.jpg",
+  "/images/gabi_day/gabi133.jpg",
+  "/images/gabi_day/gabi135.jpg",
+  "/images/gabi_day/gabi136.jpg",
+  "/images/gabi_day/gabi137.jpg",
+  "/images/gabi_day/gabi139.jpg",
+  "/images/gabi_day/gabi140.jpg",
+  "/images/gabi_day/gabi142.jpg",
+  "/images/gabi_day/gabi143.jpg",
+  "/images/gabi_day/gabi144.jpg",
+  "/images/gabi_day/gabi145.jpg",
+  "/images/gabi_day/gabi146.jpg",
+  "/images/gabi_day/gabi147.jpg",
+  "/images/gabi_day/gabi148.jpg",
+  "/images/gabi_day/gabi149.jpg",
+  "/images/gabi_day/gabi150.jpg",
+  "/images/gabi_day/gabi151.jpg",
+  "/images/gabi_day/gabi152.jpg",
+  "/images/gabi_day/gabi153.jpg",
+  "/images/gabi_day/gabi154.jpg",
+  "/images/gabi_day/gabi155.jpg",
+  "/images/gabi_day/gabi156.jpg",
+  "/images/gabi_day/gabi157.jpg",
+  "/images/gabi_day/gabi159.jpg",
+  "/images/gabi_day/gabi160.jpg",
+  "/images/gabi_day/gabi161.jpg",
+  "/images/gabi_day/gabi162.jpg",
+  "/images/gabi_day/gabi163.jpg",
+  "/images/gabi_day/gabi165.jpg",
+  "/images/gabi_day/gabi166.jpg",
+  "/images/gabi_day/gabi167.jpg",
+  "/images/gabi_day/gabi168.jpg",
+  "/images/gabi_day/gabi169.jpg",
+  "/images/gabi_day/gabi170.jpg",
+
+  // Photoshot Day images
+  "/images/photoshot_day/photoshot_1.jpg",
+  "/images/photoshot_day/photoshot_2.jpg",
+  "/images/photoshot_day/photoshot_3.jpg",
+  "/images/photoshot_day/photoshot_4.jpg",
+  "/images/photoshot_day/photoshot_5.jpg",
+  "/images/photoshot_day/photoshot_6.jpg",
+
+  // Welcome Day images
+  "/images/welcome_day/welcome1.jpg",
+  "/images/welcome_day/welcome3.jpg",
+  "/images/welcome_day/welcome5.jpg",
+  "/images/welcome_day/welcome7.jpg",
+  "/images/welcome_day/welcome9.jpg",
+  "/images/welcome_day/welcome11.jpg",
+  "/images/welcome_day/welcome12.jpg",
+  "/images/welcome_day/welcome13.jpg",
+  "/images/welcome_day/welcome14.jpg",
+  "/images/welcome_day/welcome15.jpg",
+  "/images/welcome_day/welcome16.jpg",
+  "/images/welcome_day/welcome17.jpg",
+  "/images/welcome_day/welcome18.jpg",
+  "/images/welcome_day/welcome19.jpg",
+  "/images/welcome_day/welcome20.jpg",
+  "/images/welcome_day/welcome21.jpg",
+  "/images/welcome_day/welcome22.jpg",
+  "/images/welcome_day/welcome23.jpg",
+  "/images/welcome_day/welcome24.jpg",
+  "/images/welcome_day/welcome25.jpg",
+  "/images/welcome_day/welcome26.jpg",
+  "/images/welcome_day/welcome27.jpg",
+  "/images/welcome_day/welcome28.jpg",
+  "/images/welcome_day/welcome29.jpg",
+  "/images/welcome_day/welcome30.jpg",
+  "/images/welcome_day/welcome31.jpg",
+  "/images/welcome_day/welcome32.jpg",
+  "/images/welcome_day/welcome33.jpg",
+  "/images/welcome_day/welcome34.jpg",
+  "/images/welcome_day/welcome35.jpg",
+  "/images/welcome_day/welcome36.jpg",
+  "/images/welcome_day/welcome37.jpg",
+  "/images/welcome_day/welcome38.jpg",
+  "/images/welcome_day/welcome39.jpg",
+  "/images/welcome_day/welcome40.jpg",
+  "/images/welcome_day/welcome41.jpg",
+  "/images/welcome_day/welcome42.jpg",
+  "/images/welcome_day/welcome43.jpg",
+  "/images/welcome_day/welcome44.jpg",
+  "/images/welcome_day/welcome45.jpg",
+  "/images/welcome_day/welcome46.jpg",
+  "/images/welcome_day/welcome47.jpg",
+  "/images/welcome_day/welcome48.jpg",
+  "/images/welcome_day/welcome49.jpg",
+  "/images/welcome_day/welcome50.jpg",
+  "/images/welcome_day/welcome52.jpg",
+  "/images/welcome_day/welcome54.jpg",
+  "/images/welcome_day/welcome56.jpg",
+  "/images/welcome_day/welcome58.jpg",
+  "/images/welcome_day/welcome60.jpg",
+  "/images/welcome_day/welcome62.jpg",
+  "/images/welcome_day/welcome64.jpg",
+  "/images/welcome_day/welcome65.jpg",
+  "/images/welcome_day/welcome66.jpg",
+  "/images/welcome_day/welcome67.jpg",
+  "/images/welcome_day/welcome68.jpg",
+  "/images/welcome_day/welcome69.jpg",
+  "/images/welcome_day/welcome70.jpg",
+  "/images/welcome_day/welcome71.jpg",
+  "/images/welcome_day/welcome72.jpg",
+  "/images/welcome_day/welcome73.jpg",
+  "/images/welcome_day/welcome74.jpg",
+
+  // Entrance Vibe Day images
+  "/images/entrance_vibe_day/entrance_vibe_1.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_2.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_3.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_4.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_5.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_6.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_7.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_8.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_9.jpg",
+  "/images/entrance_vibe_day/entrance_vibe_10.jpg",
+
+  // Jersey Day images
+  "/images/jersey_day/jersey1.jpg",
+  "/images/jersey_day/jersey2.jpg",
+  "/images/jersey_day/jersey3.jpg",
+  "/images/jersey_day/jersey4.jpg",
+  "/images/jersey_day/jersey5.jpg",
+  "/images/jersey_day/jersey6.jpg",
+  "/images/jersey_day/jersey7.jpg",
+  "/images/jersey_day/jersey8.jpg",
+  "/images/jersey_day/jersey9.jpg",
+  "/images/jersey_day/jersey10.jpg",
+  "/images/jersey_day/jersey11.jpg",
+  "/images/jersey_day/jersey12.jpg",
+  "/images/jersey_day/jersey13.jpg",
+  "/images/jersey_day/jersey14.jpg",
+  "/images/jersey_day/jersey15.jpg",
+  "/images/jersey_day/jersey16.jpg",
+  "/images/jersey_day/jersey17.jpg",
+  "/images/jersey_day/jersey18.jpg",
+  "/images/jersey_day/jersey19.jpg",
 ];
+
+// Shuffle the images array
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Get shuffled images once
+const shuffledImages = shuffleArray(allImages);
 
 export function AudioProvider({ children }: AudioProviderProps) {
   const [isMuted, setIsMuted] = useState(true);
@@ -123,14 +337,31 @@ export function AudioProvider({ children }: AudioProviderProps) {
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [showController, setShowController] = useState(false);
-  const [showLyrics, setShowLyrics] = useState(false);
-  const [currentLyric, setCurrentLyric] = useState("");
+  const [currentImage, setCurrentImage] = useState(shuffledImages[0]);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [transitionEffect, setTransitionEffect] = useState<
+    "fade" | "slide" | "zoom" | "blur"
+  >("fade");
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
   const isDraggingRef = useRef(false);
+  const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Get random transition effect
+  const getRandomTransition = () => {
+    const effects: ("fade" | "slide" | "zoom" | "blur")[] = [
+      "fade",
+      "slide",
+      "zoom",
+      "blur",
+    ];
+    return effects[Math.floor(Math.random() * effects.length)];
+  };
 
   // Initialize audio only once
   useEffect(() => {
@@ -201,6 +432,12 @@ export function AudioProvider({ children }: AudioProviderProps) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      if (slideshowIntervalRef.current) {
+        clearInterval(slideshowIntervalRef.current);
+      }
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
       if (audioRef.current) {
         audioRef.current.pause();
       }
@@ -240,9 +477,6 @@ export function AudioProvider({ children }: AudioProviderProps) {
         setCurrentTime(audio.currentTime);
         setDuration(audio.duration || 0);
         setProgress((audio.currentTime / (audio.duration || 1)) * 100);
-
-        // Update lyrics based on current time
-        updateLyrics(audio.currentTime);
       }
     };
 
@@ -257,17 +491,60 @@ export function AudioProvider({ children }: AudioProviderProps) {
     };
   }, []);
 
-  // Update lyrics based on current time
-  const updateLyrics = (time: number) => {
-    let currentLyricText = "";
-    for (let i = lyricsData.length - 1; i >= 0; i--) {
-      if (time >= lyricsData[i].time) {
-        currentLyricText = lyricsData[i].text;
-        break;
+  // Slideshow effect with fancy transitions
+  useEffect(() => {
+    if (isPlaying) {
+      // Start slideshow interval - change image every 4 seconds
+      slideshowIntervalRef.current = setInterval(() => {
+        // Start transition
+        setIsTransitioning(true);
+
+        // Clear any pending transition timeout
+        if (transitionTimeoutRef.current) {
+          clearTimeout(transitionTimeoutRef.current);
+        }
+
+        // Change image after a short delay for the exit animation
+        transitionTimeoutRef.current = setTimeout(() => {
+          const newIndex = (imageIndex + 1) % shuffledImages.length;
+          const newEffect = getRandomTransition();
+
+          setImageIndex(newIndex);
+          setCurrentImage(shuffledImages[newIndex]);
+          setTransitionEffect(newEffect);
+
+          // Reset transition state after the image loads
+          setTimeout(() => {
+            setIsTransitioning(false);
+          }, 100);
+        }, 400);
+
+        // Change image every 4 seconds
+      }, 4000);
+    } else {
+      // Clear interval when audio is paused
+      if (slideshowIntervalRef.current) {
+        clearInterval(slideshowIntervalRef.current);
+        slideshowIntervalRef.current = null;
       }
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+      setIsTransitioning(false);
     }
-    setCurrentLyric(currentLyricText);
-  };
+
+    return () => {
+      if (slideshowIntervalRef.current) {
+        clearInterval(slideshowIntervalRef.current);
+        slideshowIntervalRef.current = null;
+      }
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+    };
+  }, [isPlaying, imageIndex]);
 
   // Update volume when changed
   useEffect(() => {
@@ -325,7 +602,6 @@ export function AudioProvider({ children }: AudioProviderProps) {
       audioRef.current.currentTime = newTime;
       setCurrentTime(newTime);
       setProgress((newTime / duration) * 100);
-      updateLyrics(newTime);
     }
   };
 
@@ -346,9 +622,39 @@ export function AudioProvider({ children }: AudioProviderProps) {
     setShowController(false);
   };
 
-  // Toggle lyrics visibility
-  const toggleLyrics = () => {
-    setShowLyrics(!showLyrics);
+  // Get transition class based on current effect
+  const getTransitionClass = () => {
+    if (!isTransitioning) {
+      return "opacity-100 scale-100 translate-x-0 translate-y-0 blur-0";
+    }
+
+    switch (transitionEffect) {
+      case "fade":
+        return "opacity-0";
+      case "slide":
+        return "translate-x-8 opacity-0";
+      case "zoom":
+        return "scale-110 opacity-0";
+      case "blur":
+        return "blur-md opacity-0";
+      default:
+        return "opacity-0";
+    }
+  };
+
+  const getTransitionEnterClass = () => {
+    switch (transitionEffect) {
+      case "fade":
+        return "opacity-0";
+      case "slide":
+        return "-translate-x-8 opacity-0";
+      case "zoom":
+        return "scale-90 opacity-0";
+      case "blur":
+        return "blur-md opacity-0";
+      default:
+        return "opacity-0";
+    }
   };
 
   return (
@@ -368,9 +674,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
         showController,
         toggleController,
         closeController,
-        showLyrics,
-        toggleLyrics,
-        currentLyric,
+        currentImage,
       }}
     >
       {children}
@@ -391,58 +695,59 @@ export function AudioProvider({ children }: AudioProviderProps) {
                 <p className="text-gray-400 text-xs">NOVAREING 2026</p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={toggleLyrics}
-                className={`p-1.5 rounded-full transition-colors ${
-                  showLyrics
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : "hover:bg-white/10 text-gray-400 hover:text-white"
-                }`}
-                aria-label="Toggle lyrics"
-              >
-                <AlignLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={closeController}
-                className="p-1 rounded-full hover:bg-white/10 transition-colors"
-              >
-                <X className="w-4 h-4 text-gray-400 hover:text-white" />
-              </button>
-            </div>
+            <button
+              onClick={closeController}
+              className="p-1 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <X className="w-4 h-4 text-gray-400 hover:text-white" />
+            </button>
           </div>
 
-          {/* Lyrics Display */}
-          {showLyrics && (
-            <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/5 max-h-48 overflow-y-auto">
-              <div className="text-center mb-3">
-                <p className="text-yellow-400 text-lg font-medium transition-all duration-300 leading-relaxed">
-                  {currentLyric || "🎵 ዝም ብለህ ስማ..."}
-                </p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-1.5">
-                {lyricsData.map((lyric, index) => {
-                  const isCurrent =
-                    currentTime >= lyric.time &&
-                    currentTime < (lyricsData[index + 1]?.time || Infinity);
-                  return (
-                    <span
-                      key={index}
-                      className={`text-[10px] px-2 py-0.5 rounded transition-all duration-300 ${
-                        isCurrent
-                          ? "bg-yellow-500/30 text-yellow-400 font-medium scale-105"
-                          : "text-gray-500 hover:text-gray-300"
-                      }`}
-                    >
-                      {lyric.text.length > 15
-                        ? lyric.text.substring(0, 15) + "..."
-                        : lyric.text}
-                    </span>
-                  );
-                })}
+          {/* Fancy Slideshow Display */}
+          <div className="mb-4 p-2 bg-white/5 rounded-lg border border-white/5 overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-black">
+              <img
+                src={currentImage}
+                alt="Memory slideshow"
+                className={`w-full h-full object-cover grayscale transition-all duration-700 ease-in-out ${getTransitionClass()}`}
+                style={{ willChange: "transform, opacity, filter" }}
+              />
+
+              {/* Decorative border glow */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent" />
               </div>
             </div>
-          )}
+
+            {/* Progress dots with animation */}
+            <div className="flex justify-center mt-2 gap-1.5">
+              {Array.from({ length: Math.min(6, shuffledImages.length) }).map(
+                (_, i) => {
+                  const dotIndex = Math.floor((i / 6) * shuffledImages.length);
+                  const isActive =
+                    dotIndex === imageIndex % shuffledImages.length;
+                  return (
+                    <div
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${
+                        isActive
+                          ? "w-6 bg-yellow-400 shadow-lg shadow-yellow-400/50"
+                          : "w-1.5 bg-white/30"
+                      }`}
+                    />
+                  );
+                },
+              )}
+            </div>
+
+            {/* Transition effect label */}
+            <div className="flex justify-center mt-1.5">
+              <span className="text-[8px] uppercase tracking-widest text-gray-500/70">
+                {isTransitioning ? `✦ ${transitionEffect} ✦` : "✦ memories ✦"}
+              </span>
+            </div>
+          </div>
 
           {/* Progress Bar */}
           <div className="mb-3">

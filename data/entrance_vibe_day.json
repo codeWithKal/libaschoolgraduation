@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_1.jpg",
+    "caption": "Entrance Vibe Day image 1"
+  },
+  {
+    "id": 2,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_2.jpg",
+    "caption": "Entrance Vibe Day image 2"
+  },
+  {
+    "id": 3,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_3.jpg",
+    "caption": "Entrance Vibe Day image 3"
+  },
+  {
+    "id": 4,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_4.jpg",
+    "caption": "Entrance Vibe Day image 4"
+  },
+  {
+    "id": 5,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_5.jpg",
+    "caption": "Entrance Vibe Day image 5"
+  },
+  {
+    "id": 6,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_6.jpg",
+    "caption": "Entrance Vibe Day image 6"
+  },
+  {
+    "id": 7,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_7.jpg",
+    "caption": "Entrance Vibe Day image 7"
+  },
+  {
+    "id": 8,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_8.jpg",
+    "caption": "Entrance Vibe Day image 8"
+  },
+  {
+    "id": 9,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_9.jpg",
+    "caption": "Entrance Vibe Day image 9"
+  },
+  {
+    "id": 10,
+    "type": "image",
+    "url": "/images/entrance_vibe_day/entrance_vibe_10.jpg",
+    "caption": "Entrance Vibe Day image 10"
+  }
+]

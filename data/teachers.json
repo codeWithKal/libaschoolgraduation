@@ -1,28 +1,29 @@
 [
   {
     "id": 1,
-    "name": "Mr. Mekonnen elifnew",
-    "phone": "0911689680",
-    "subject": "Weekend Mathematics Teacher",
-    "photo_url": "images/teachers/mekonnen.jpg",
-    "quote": "Please work hard"
+    "name": "Mr. Chali Abate",
+    "phone": "+251913847691",
+    "subject": "High school principal",
+    "photo_url": "images/teachers/chali.jpg",
+    "quote": "go out there and own your future."
   },
   {
     "id": 2,
-    "name": "Mr. Bereket W/Gebriel",
-    "phone": "0985330685",
-    "subject": "History",
-    "photo_url": "images/teachers/bereket.jpg",
-    "quote": "Enjoy the moment"
+    "name": "Mr. Debela Wakgari",
+    "phone": "0917000044",
+    "subject": "LIBA Academic Supervisor",
+    "photo_url": "images/teachers/debela.jpg",
+    "quote": "Education breeds confidence, confidence breeds hope, hope breeds peace!Read today, lead tomorrow!"
   },
   {
     "id": 3,
-    "name": "Mr. Hazim s",
-    "phone": "0934103150",
-    "subject": "Economics",
-    "photo_url": "images/teachers/hazim.jpg",
-    "quote": "V = f ( k.c ) Where V= value, K= knowledge, C= currency. Knowledge without value is silent gold. Currency without wisdom is hollow wealth when both unite, civilization rise"
+    "name": "Dr. Bogale Teferi",
+    "phone": "0906144025",
+    "subject": "Geography",
+    "photo_url": "images/teachers/bogale.jpg",
+    "quote": "May your dreams guide you and your efforts lead you to success. Best wishes for the journey ahead."
   },
+
   {
     "id": 4,
     "name": "Mr. Abel bulcha",
@@ -55,12 +56,67 @@
     "photo_url": "images/teachers/tesfaye.jpg",
     "quote": "The beautiful thing about learning is that no one can take it away from you,so keep on learning!"
   },
+
   {
     "id": 8,
+    "name": "Mr. Mekonnen elifnew",
+    "phone": "0911689680",
+    "subject": "Weekend Mathematics Teacher",
+    "photo_url": "images/teachers/mekonnen.jpg",
+
     "name": "በላይነህ ዘውዴ",
     "phone": "0949773004",
     "subject": "አማርኛ",
     "photo_url": "images/teachers/belayneh.jpg",
     "quote": "ቂመኝነት ወይም ነገሮችን በይቅርታ አለመደምሰስ ፤ ልክ እኛው ራሳችን መረዝ ጠጥተን ነገር ግን ጠላታችን አሁን ካሁን ሊሞት ነው እያልን እንደመጠበቅ ያለ ተስፋ ነው።"
+  },
+  {
+    "id": 9,
+    "name": "Mr. Naol Tesfaye",
+    "phone": "0913668013",
+    "subject": "ICT",
+    "photo_url": "images/teachers/naol.jpg",
+    "quote": "Ctrl+S your memories, Ctrl+Shift+Delete your doubts, and program your own success. Have a bright future!"
+  },
+  {
+    "id": 10,
+    "name": "Mr. Muktar Godana",
+    "phone": "0940160779",
+    "subject": "HPE",
+    "photo_url": "images/teachers/muktar.jpg",
+    "quote": "No matter how life changes, you will always be part orlf our school's story. We are proud of you"
+  },
+  {
+    "id": 11,
+    "name": "Mr. Bereket W/Gebriel",
+    "phone": "0985330685",
+    "subject": "History",
+    "photo_url": "images/teachers/bereket.jpg",
+    "quote": "Don't let the time Pass through you, Rather pass through it"
+  },
+  {
+    "id": 12,
+    "name": "Mr. Abenezer Taffesse",
+    "phone": "Abi4tata11@gmail.com",
+    "subject": "Biology",
+    "photo_url": "images/teachers/abenezer.jpg",
+    "quote": "Try and fail but not fail to try"
+  },
+  {
+    "id": 13,
+    "name": "Mr. Hazim s",
+    "phone": "0934103150",
+    "subject": "Economics",
+    "photo_url": "images/teachers/hazim.jpg",
+    "quote": "V = f ( k.c ) Where V= value, K= knowledge, C= currency. Knowledge without value is silent gold. Currency without wisdom is hollow wealth when both unite, civilization rise"
+  },
+
+  {
+    "id": 14,
+    "name": "Mr. Mekonnen elifnew",
+    "phone": "0911689680",
+    "subject": "Weekend Mathematics Teacher",
+    "photo_url": "images/teachers/mekonnen.jpg",
+    "quote": "Please work hard"
   }
 ]

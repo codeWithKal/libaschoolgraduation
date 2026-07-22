@@ -228,14 +228,27 @@ export default function MemoriesPage() {
   const { data: gabiGallery } = useData<GalleryItem[]>("gabi_day.json");
   const { data: crazyGallery } = useData<GalleryItem[]>("photoshot_day.json");
   const { data: welcomeGallery } = useData<GalleryItem[]>("welcome_day.json");
+  const { data: entranceExamGallery } = useData<GalleryItem[]>(
+    "entrance_vibe_day.json",
+  );
+  const { data: jerseyGallery } = useData<GalleryItem[]>("jersey_day.json");
 
-  const days = ["Gabi Day", "Photoshoot Day", "Welcome Day"];
+  // FIXED: Changed "Entrance Exam Vibe Day" to "Entrance Vibe Day" to match JSON
+  const days = [
+    "Gabi Day",
+    "Photoshoot Day",
+    "Welcome Day",
+    "Entrance Vibe Day",
+    "Jersey Day",
+  ];
 
   const gallery = useMemo(() => {
     const dayFolderMap: Record<string, string> = {
       "Gabi Day": "/images/gabi_day",
       "Photoshoot Day": "/images/photoshot_day",
       "Welcome Day": "/images/welcome_day",
+      "Entrance Vibe Day": "/images/entrance_vibe_day", // FIXED: Changed key
+      "Jersey Day": "/images/jersey_day",
     };
 
     const selectedItems =
@@ -245,12 +258,17 @@ export default function MemoriesPage() {
           ? crazyGallery
           : selectedDay === "Welcome Day"
             ? welcomeGallery
-            : [];
+            : selectedDay === "Entrance Vibe Day" // FIXED: Changed comparison
+              ? entranceExamGallery
+              : selectedDay === "Jersey Day"
+                ? jerseyGallery
+                : [];
 
     const currentFolder = dayFolderMap[selectedDay] ?? "";
 
     return (
       selectedItems?.map((item) => {
+        // If the URL already starts with the folder, return as is
         if (!currentFolder || item.url.startsWith(currentFolder)) return item;
 
         const fileName = item.url.split("/").pop();
@@ -259,7 +277,14 @@ export default function MemoriesPage() {
           : item;
       }) ?? []
     );
-  }, [selectedDay, gabiGallery, crazyGallery, welcomeGallery]);
+  }, [
+    selectedDay,
+    gabiGallery,
+    crazyGallery,
+    welcomeGallery,
+    entranceExamGallery,
+    jerseyGallery,
+  ]);
 
   const filteredGallery = useMemo(() => {
     if (!gallery) return [];
